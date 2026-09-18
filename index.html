@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
@@ -34,7 +34,136 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+/* OCR Preview Modal styles */
+#ocrPreviewModal.hidden { display: none !important; }
+#ocrPreviewModal { z-index: 1000; }
+#ocrPreviewModal:not(.hidden) { display: flex !important; }
+/* Be Vietnam Pro font */
+body { font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Timetable - absolute positioning layout */
+.timetable-scroll-wrapper { scrollbar-gutter: stable; }
+.timetable-scroll-wrapper::-webkit-scrollbar { width: 7px; height: 7px; }
+.timetable-scroll-wrapper::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 9999px; }
+.timetable-scroll-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+.timetable-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Lesson cell hover effect */
+.lesson-cell-abs:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+  transform: translateY(-1px);
+}
+
+/* Click overlay hover */
+.click-overlay-abs:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+/* Toast */
+.toast-item { animation: toastIn 0.3s ease-out; }
+@keyframes toastIn { from { opacity:0; transform: translateY(20px) scale(0.95); } to { opacity:1; transform: translateY(0) scale(1); } }
+
+/* Animated Title Letters - 3D Effect */
+.title-letter {
+  display: inline-block;
+  animation: danceLetter 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+  text-shadow:
+    2px 2px 0px rgba(0, 0, 0, 0.1),
+    4px 4px 0px rgba(0, 0, 0, 0.15),
+    6px 6px 12px rgba(0, 0, 0, 0.2),
+    -1px -1px 0px rgba(255, 255, 255, 0.8);
+  filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.08));
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+.title-letter:nth-child(1) { animation-delay: 0s; }
+.title-letter:nth-child(2) { animation-delay: 0.08s; }
+.title-letter:nth-child(3) { animation-delay: 0.16s; }
+.title-letter:nth-child(4) { animation-delay: 0.24s; }
+.title-letter:nth-child(5) { animation-delay: 0.32s; }
+.title-letter:nth-child(6) { animation-delay: 0.08s; }
+.title-letter:nth-child(7) { animation-delay: 0.16s; }
+.title-letter:nth-child(8) { animation-delay: 0.24s; }
+.title-letter:nth-child(9) { animation-delay: 0.32s; }
+.title-letter:nth-child(10) { animation-delay: 0.4s; }
+.title-letter:nth-child(11) { animation-delay: 0.48s; }
+.title-letter:nth-child(12) { animation-delay: 0.56s; }
+.title-letter:nth-child(13) { animation-delay: 0.64s; }
+
+@keyframes danceLetter {
+  0% { transform: translateY(0) rotateX(0deg) rotateZ(0deg) scale(1); }
+  25% { transform: translateY(-12px) rotateX(-5deg) rotateZ(-2deg) scale(1.05); }
+  50% { transform: translateY(6px) rotateX(3deg) rotateZ(1deg) scale(0.98); }
+  75% { transform: translateY(-8px) rotateX(-2deg) rotateZ(-1deg) scale(1.03); }
+  100% { transform: translateY(0) rotateX(0deg) rotateZ(0deg) scale(1); }
+}
+
+/* Floating Soccer Ball - Hidden */
+.floating-ball-container { display: none; }
+.floating-ball { display: none; }
+
+/* Dropdown */
+.dropdown-menu { transform-origin: top left; transition: all 0.15s ease-out; }
+.dropdown-menu.hidden { opacity:0; transform: scale(0.95); pointer-events: none; }
+.dropdown-menu:not(.hidden) { opacity:1; transform: scale(1); pointer-events: auto; }
+
+/* Profile Dropdown */
+#profileDropdown {
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Today timeline - glowing current subject */
+@keyframes todayGlow {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(16, 185, 129, 0.5), 0 0 16px 4px rgba(16, 185, 129, 0.25); }
+  50% { box-shadow: 0 0 14px 4px rgba(16, 185, 129, 0.7), 0 0 28px 8px rgba(16, 185, 129, 0.35); }
+}
+.today-subject-current {
+  animation: todayGlow 1.8s ease-in-out infinite;
+  border-color: #10b981 !important;
+  z-index: 10;
+}
+.today-timeline-ruler {
+  background-image: repeating-linear-gradient(to right, transparent 0, transparent calc(100% - 1px), #e2e8f0 calc(100% - 1px), #e2e8f0 100%);
+}
+.today-now-line {
+  background: linear-gradient(to bottom, #ef4444, #f87171);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+#profile-pills-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+/* Print A4 */
+@media print {
+  nav, .no-print, header, footer, .btn-action, #toast-container, .modal-backdrop, #profileDropdown, .admin-only { display: none !important; }
+  body { background: #fff !important; color: #000 !important; font-size: 10pt; margin: 0; padding: 0; }
+  #timetable-print-area { width: 100% !important; max-width: 100% !important; padding: 6mm !important; box-shadow: none !important; border: none !important; display: block !important; }
+  .print-header { display: block !important; margin-bottom: 12px; text-align: center; }
+  #timetable-scroll-wrapper { overflow: visible !important; max-height: none !important; height: auto !important; box-shadow: none !important; border: none !important; }
+  .timetable-header-row { position: static !important; }
+  .lesson-cell-abs { page-break-inside: avoid; }
+  .print-color-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+
+
+</style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col antialiased">
 
@@ -664,15 +793,3625 @@
     </div>
   </div>
 
-  <!-- ===== APPLICATION SCRIPTS ===== -->
-  <script src="js/logger.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/firebase-config.js"></script>
-  <script src="js/subjects.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/timetable.js"></script>
-  <script src="js/homework.js"></script>
-  <script src="js/ocr-handler.js"></script>
-  <script src="js/app.js"></script>
+  <!-- ===== APPLICATION SCRIPTS (ALL-IN-ONE STANDALONE) ===== -->
+  <script>
+/**
+ * logger.js - Ghi log lỗi và sự kiện
+ * Log lưu trong localStorage (persist qua refresh).
+ * Nhấn Ctrl+Shift+L hoặc nút "Tải log" trong Admin để tải file log.
+ */
+class AppLogger {
+  constructor() {
+    this.logs = [];
+    this.maxLogs = 500;
+    this.startTime = new Date();
+    this.errorCount = 0;
+    this._saveTimer = null;
+    this._loadFromStorage();
+  }
+
+  _loadFromStorage() {
+    try {
+      const saved = localStorage.getItem('jinsu_logs');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.logs = Array.isArray(parsed.logs) ? parsed.logs : [];
+        this.errorCount = parsed.errorCount || 0;
+        this.startTime = parsed.startTime ? new Date(parsed.startTime) : new Date();
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  _saveToStorage() {
+    try {
+      localStorage.setItem('jinsu_logs', JSON.stringify({
+        logs: this.logs,
+        errorCount: this.errorCount,
+        startTime: this.startTime.toISOString()
+      }));
+    } catch (e) { /* localStorage full — ignore */ }
+  }
+
+  _scheduleSave() {
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => {
+      this._saveToStorage();
+      this._saveTimer = null;
+    }, 1000);
+  }
+
+  log(level, message, data = null) {
+    const entry = {
+      time: new Date().toISOString(),
+      level,
+      message,
+      data: data ? (typeof data === 'string' ? data : JSON.stringify(data).substring(0, 500)) : null
+    };
+    this.logs.push(entry);
+    if (this.logs.length > this.maxLogs) this.logs.shift();
+
+    // In ra console với màu
+    const colors = { ERROR: 'color:red;font-weight:bold', WARN: 'color:orange', INFO: 'color:blue', DEBUG: 'color:gray' };
+    console.log(`%c[${entry.time}] [${level}] ${message}`, colors[level] || '');
+    if (data) console.log(data);
+
+    if (level === 'ERROR') this.errorCount++;
+    this._scheduleSave();
+  }
+
+  info(msg, data) { this.log('INFO', msg, data); }
+  warn(msg, data) { this.log('WARN', msg, data); }
+  error(msg, data) { this.log('ERROR', msg, data); }
+  debug(msg, data) { this.log('DEBUG', msg, data); }
+
+  setupGlobalHandlers() {
+    window.addEventListener('error', (e) => {
+      this.error('JS Error: ' + e.message, `File: ${e.filename}:${e.lineno}:${e.colno}`);
+    });
+
+    window.addEventListener('unhandledrejection', (e) => {
+      this.error('Unhandled Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason), e.reason && e.reason.stack);
+    });
+
+    // Bắt lỗi network (fetch)
+    const origFetch = window.fetch;
+    window.fetch = async (...args) => {
+      try {
+        const res = await origFetch(...args);
+        if (!res.ok) this.warn(`Fetch ${args[0]} → ${res.status}`);
+        return res;
+      } catch (err) {
+        this.error(`Fetch failed: ${args[0]}`, err.message);
+        throw err;
+      }
+    };
+
+    // Bắt console.error
+    const origConsoleError = console.error;
+    console.error = (...args) => {
+      this.error('console.error', args.map(a => typeof a === 'object' ? JSON.stringify(a).substring(0, 300) : String(a)).join(' '));
+      origConsoleError.apply(console, args);
+    };
+
+    // Phím tắt: Ctrl+Shift+L → tải log
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'l')) {
+        e.preventDefault();
+        this.downloadLogs();
+      }
+    });
+
+    this.info('Logger initialized at ' + this.startTime.toISOString());
+  }
+
+  // Tải log xuống file — chỉ khi user bấm nút hoặc Ctrl+Shift+L
+  downloadLogs() {
+    const lines = this.logs.map(l => {
+      const dataStr = l.data ? ` | ${l.data}` : '';
+      return `[${l.time}] [${l.level}] ${l.message}${dataStr}`;
+    });
+    const text = `=== JINSU APP LOG ===\nStarted: ${this.startTime.toISOString()}\nGenerated: ${new Date().toISOString()}\nTotal entries: ${this.logs.length}\nErrors: ${this.errorCount}\n\n${lines.join('\n')}`;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `jinsu_log_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Xóa toàn bộ log
+  clearLogs() {
+    this.logs = [];
+    this.errorCount = 0;
+    this.startTime = new Date();
+    this._saveToStorage();
+  }
+}
+
+window.appLogger = new AppLogger();
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => window.appLogger.setupGlobalHandlers());
+} else {
+  window.appLogger.setupGlobalHandlers();
+}
+
+  </script>
+  <script>
+/**
+ * data.js - Dữ liệu mặc định: Môn học, Khung giờ, Hồ sơ mẫu, TKB mẫu
+ */
+
+const PRESET_COLORS = [
+  '#3b82f6','#0ea5e9','#06b6d4','#14b8a6','#10b981','#84cc16',
+  '#eab308','#f59e0b','#f97316','#ef4444','#ec4899','#d946ef',
+  '#a855f7','#8b5cf6','#6366f1','#64748b'
+];
+
+const DEFAULT_SUBJECTS = [
+  { id:'math', name:'Toán học', shortName:'Toán', color:'#3b82f6', textColor:'#ffffff', bgLight:'#eff6ff', border:'#bfdbfe' },
+  { id:'literature', name:'Ngữ văn', shortName:'Văn', color:'#f97316', textColor:'#ffffff', bgLight:'#fff7ed', border:'#fed7aa' },
+  { id:'english', name:'Tiếng Anh', shortName:'Anh', color:'#10b981', textColor:'#ffffff', bgLight:'#ecfdf5', border:'#a7f3d0' },
+  { id:'physics', name:'Vật lí', shortName:'Lý', color:'#8b5cf6', textColor:'#ffffff', bgLight:'#f5f3ff', border:'#ddd6fe' },
+  { id:'chemistry', name:'Hóa học', shortName:'Hóa', color:'#06b6d4', textColor:'#ffffff', bgLight:'#ecfeff', border:'#a5f3fc' },
+  { id:'biology', name:'Sinh học', shortName:'Sinh', color:'#84cc16', textColor:'#ffffff', bgLight:'#f7fee7', border:'#d9f99d' },
+  { id:'history', name:'Lịch sử', shortName:'Sử', color:'#d97706', textColor:'#ffffff', bgLight:'#fffbeb', border:'#fde68a' },
+  { id:'geography', name:'Địa lí', shortName:'Địa', color:'#eab308', textColor:'#ffffff', bgLight:'#fefce8', border:'#fef08a' },
+  { id:'civics', name:'GDCD / KT-PL', shortName:'GDCD', color:'#6366f1', textColor:'#ffffff', bgLight:'#eef2ff', border:'#c7d2fe' },
+  { id:'informatics', name:'Tin học', shortName:'Tin', color:'#a855f7', textColor:'#ffffff', bgLight:'#faf5ff', border:'#e9d5ff' },
+  { id:'technology', name:'Công nghệ', shortName:'CN', color:'#64748b', textColor:'#ffffff', bgLight:'#f8fafc', border:'#cbd5e1' },
+  { id:'pe', name:'Giáo dục thể chất', shortName:'Thể dục', color:'#ef4444', textColor:'#ffffff', bgLight:'#fef2f2', border:'#fecaca' },
+  { id:'defense', name:'GD Quốc phòng', shortName:'GDQP', color:'#4d7c0f', textColor:'#ffffff', bgLight:'#f7fee7', border:'#bef264' },
+  { id:'art', name:'Nghệ thuật (Họa/Nhạc)', shortName:'Nghệ thuật', color:'#ec4899', textColor:'#ffffff', bgLight:'#fdf2f8', border:'#fbcfe8' },
+  { id:'experiential', name:'HĐTN & Hướng nghiệp', shortName:'HĐTN', color:'#14b8a6', textColor:'#ffffff', bgLight:'#f0fdfa', border:'#99f6e4' },
+  { id:'flag', name:'Chào cờ', shortName:'Chào cờ', color:'#b91c1c', textColor:'#ffffff', bgLight:'#fef2f2', border:'#fca5a5' },
+  { id:'class_meeting', name:'Sinh hoạt lớp', shortName:'SHL', color:'#0f766e', textColor:'#ffffff', bgLight:'#f0fdfa', border:'#5eead4' },
+  { id:'extra', name:'Học thêm / Bồi dưỡng', shortName:'Học thêm', color:'#0284c7', textColor:'#ffffff', bgLight:'#f0f9ff', border:'#bae6fd' },
+  { id:'lsdl_dia', name:'LS&ĐL Địa', shortName:'Địa', color:'#eab308', textColor:'#ffffff', bgLight:'#fefce8', border:'#fef08a' },
+  { id:'lsdl_su', name:'LS&ĐL Sử', shortName:'Sử', color:'#d97706', textColor:'#ffffff', bgLight:'#fffbeb', border:'#fde68a' },
+  { id:'khtn_ly', name:'KHTN Lý', shortName:'KHTN Lý', color:'#8b5cf6', textColor:'#ffffff', bgLight:'#f5f3ff', border:'#ddd6fe' },
+  { id:'khtn_hoa', name:'KHTN Hóa', shortName:'KHTN Hóa', color:'#06b6d4', textColor:'#ffffff', bgLight:'#ecfeff', border:'#a5f3fc' },
+  { id:'khtn_sinh', name:'KHTN Sinh', shortName:'KHTN Sinh', color:'#84cc16', textColor:'#ffffff', bgLight:'#f7fee7', border:'#d9f99d' },
+  { id:'gddp', name:'GDĐP', shortName:'GDĐP', color:'#0284c7', textColor:'#ffffff', bgLight:'#f0f9ff', border:'#bae6fd' },
+  { id:'nt_mythuat', name:'NT Mỹ thuật', shortName:'Mỹ thuật', color:'#ec4899', textColor:'#ffffff', bgLight:'#fdf2f8', border:'#fbcfe8' },
+  { id:'nt_amnhac', name:'NT Âm nhạc', shortName:'Âm nhạc', color:'#f43f5e', textColor:'#ffffff', bgLight:'#fff1f2', border:'#fecdd3' },
+  { id:'hdtn_shdc', name:'HĐTN SHDC', shortName:'SHDC', color:'#b91c1c', textColor:'#ffffff', bgLight:'#fef2f2', border:'#fca5a5' },
+  { id:'hdtn_shl', name:'HĐTN SHL', shortName:'SHL', color:'#0f766e', textColor:'#ffffff', bgLight:'#f0fdfa', border:'#5eead4' },
+  { id:'hdtn_cd', name:'HĐTN CĐ', shortName:'HĐTN CĐ', color:'#14b8a6', textColor:'#ffffff', bgLight:'#f0fdfa', border:'#99f6e4' },
+  { id:'toan_m', name:'Toán (M)', shortName:'Toán (M)', color:'#2563eb', textColor:'#ffffff', bgLight:'#eff6ff', border:'#bfdbfe' },
+  { id:'toan_h', name:'Toán (H)', shortName:'Toán (H)', color:'#1d4ed8', textColor:'#ffffff', bgLight:'#eff6ff', border:'#93c5fd' },
+  { id:'other', name:'Khác', shortName:'Khác', color:'#64748b', textColor:'#ffffff', bgLight:'#f8fafc', border:'#e2e8f0' }
+];
+
+const DEFAULT_PERIOD_TIMES = {
+  1:{start:'07:15',end:'08:00'}, 2:{start:'08:05',end:'08:50'}, 3:{start:'09:05',end:'09:50'}, 4:{start:'09:55',end:'10:40'}, 5:{start:'10:45',end:'11:30'},
+  6:{start:'13:30',end:'14:15'}, 7:{start:'14:20',end:'15:05'}, 8:{start:'15:20',end:'16:05'}, 9:{start:'16:10',end:'16:55'}, 10:{start:'17:00',end:'17:45'},
+  11:{start:'18:00',end:'18:45'}, 12:{start:'18:55',end:'19:40'}, 13:{start:'19:50',end:'20:35'}
+};
+
+
+const DEFAULT_PROFILES = [
+  { id:'student_jin', studentName:'Lê Sỹ Nhật Thành', className:'Lớp 8A2.3', schoolName:'THCS Võ Cường', academicYear:'2026 - 2027', color:'#3b82f6', avatar:'T', showSunday:true, morningCount:5, afternoonCount:5, eveningCount:3 },
+  { id:'student_su', studentName:'Lê Vũ Phương Thảo', className:'Lớp 6A2.3', schoolName:'THCS Võ Cường', academicYear:'2026 - 2027', color:'#ec4899', avatar:'P', showSunday:true, morningCount:5, afternoonCount:5, eveningCount:3 }
+];
+
+// DỮ LIỆU TKB QUÉT TỪ ẢNH - HỌC SINH THÀNH
+const SAMPLE_SCHEDULE_JIN = {
+  // Thứ 2
+  '2_1': { subjectId:'informatics', name:'Tin học', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '2_2': { subjectId:'lsdl_dia', name:'LS&ĐL Địa', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '2_3': { subjectId:'lsdl_su', name:'LS&ĐL Sử', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '2_4': { subjectId:'english', name:'Tiếng Anh', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  '2_5': { subjectId:'pe', name:'GDTC', startTime:'10:40', endTime:'11:15', teacher:'', room:'', note:'' },
+  '2_6': { subjectId:'literature', name:'Ngữ văn', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '2_7': { subjectId:'nt_amnhac', name:'NT Âm nhạc', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '2_8': { subjectId:'hdtn_shdc', name:'HĐTN SHDC', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  '2_11': { subjectId:'toan_m', name:'Toán (M)', startTime:'17:00', endTime:'19:00', teacher:'', room:'', note:'' },
+  '2_12': { subjectId:'toan_h', name:'Toán (H)', startTime:'19:30', endTime:'21:30', teacher:'', room:'', note:'' },
+  // Thứ 3
+  '3_6': { subjectId:'khtn_ly', name:'KHTN Lý', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '3_7': { subjectId:'gddp', name:'GDĐP', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '3_8': { subjectId:'technology', name:'Công nghệ', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  '3_11': { subjectId:'english', name:'Anh', startTime:'17:00', endTime:'19:00', teacher:'', room:'', note:'' },
+  // Thứ 4
+  '4_1': { subjectId:'math', name:'Toán', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '4_2': { subjectId:'math', name:'Toán', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '4_3': { subjectId:'lsdl_dia', name:'LS&ĐL Địa', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '4_4': { subjectId:'pe', name:'GDTC', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  '4_5': { subjectId:'english', name:'Tiếng Anh', startTime:'10:40', endTime:'11:15', teacher:'', room:'', note:'' },
+  '4_6': { subjectId:'civics', name:'GDCD', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '4_7': { subjectId:'literature', name:'Ngữ văn', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '4_8': { subjectId:'literature', name:'Ngữ văn', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  // Thứ 5
+  '5_6': { subjectId:'khtn_ly', name:'KHTN Lý', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '5_7': { subjectId:'khtn_sinh', name:'KHTN Sinh', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '5_8': { subjectId:'hdtn_cd', name:'HĐTN CĐ', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  '5_11': { subjectId:'english', name:'Anh', startTime:'17:00', endTime:'19:00', teacher:'', room:'', note:'' },
+  // Thứ 6
+  '6_1': { subjectId:'math', name:'Toán', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '6_2': { subjectId:'math', name:'Toán', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '6_3': { subjectId:'nt_mythuat', name:'NT Mỹ thuật', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '6_4': { subjectId:'english', name:'Tiếng Anh', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  '6_6': { subjectId:'khtn_hoa', name:'KHTN Hóa', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '6_7': { subjectId:'literature', name:'Ngữ văn', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '6_8': { subjectId:'hdtn_shl', name:'HĐTN SHL', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  '6_9': { subjectId:'hdtn_shl', name:'HĐTN SHL', startTime:'16:35', endTime:'17:10', teacher:'', room:'', note:'' },
+  '6_11': { subjectId:'literature', name:'Văn', startTime:'17:30', endTime:'19:00', teacher:'', room:'', note:'' },
+  '6_12': { subjectId:'toan_h', name:'Toán (H)', startTime:'19:30', endTime:'21:30', teacher:'', room:'', note:'' },
+  // Thứ 7
+  '7_6': { subjectId:'literature', name:'Văn', startTime:'14:00', endTime:'16:00', teacher:'', room:'', note:'' },
+  // Chủ Nhật
+  '8_12': { subjectId:'toan_m', name:'Toán (M)', startTime:'19:00', endTime:'21:00', teacher:'', room:'', note:'' }
+};
+
+// DỮ LIỆU TKB QUÉT TỪ ẢNH - HỌC SINH THẢO
+const SAMPLE_SCHEDULE_SU = {
+  // Thứ 2
+  '2_1': { subjectId:'hdtn_shdc', name:'HĐTN DC', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '2_2': { subjectId:'hdtn_cd', name:'HĐTN CĐ', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '2_3': { subjectId:'math', name:'Toán', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '2_4': { subjectId:'english', name:'Tiếng Anh', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  // Thứ 3
+  '3_1': { subjectId:'math', name:'Toán', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '3_2': { subjectId:'khtn_sinh', name:'KHTN Sinh', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '3_3': { subjectId:'khtn_ly', name:'KHTN Lý', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '3_4': { subjectId:'english', name:'Tiếng Anh', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  '3_6': { subjectId:'khtn_ly', name:'KHTN Lý', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '3_7': { subjectId:'technology', name:'Công nghệ', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '3_8': { subjectId:'pe', name:'GDTC', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  // Thứ 4
+  '4_1': { subjectId:'english', name:'Tiếng Anh', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '4_2': { subjectId:'nt_mythuat', name:'NT Mỹ thuật', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '4_3': { subjectId:'math', name:'Toán', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '4_4': { subjectId:'literature', name:'Ngữ văn', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  '4_6': { subjectId:'pe', name:'GDTC', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '4_7': { subjectId:'civics', name:'GDCD', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '4_8': { subjectId:'nt_amnhac', name:'NT Âm nhạc', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  // Thứ 5
+  '5_1': { subjectId:'math', name:'Toán', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '5_2': { subjectId:'lsdl_su', name:'LS-ĐL Sử', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '5_3': { subjectId:'gddp', name:'GDĐP', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '5_4': { subjectId:'literature', name:'Ngữ văn', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  '5_6': { subjectId:'english', name:'Anh', startTime:'14:00', endTime:'16:00', teacher:'', room:'', note:'' },
+  // Thứ 6
+  '6_1': { subjectId:'literature', name:'Ngữ văn', startTime:'07:15', endTime:'08:00', teacher:'', room:'', note:'' },
+  '6_2': { subjectId:'literature', name:'Ngữ văn', startTime:'08:05', endTime:'08:50', teacher:'', room:'', note:'' },
+  '6_3': { subjectId:'informatics', name:'Tin học', startTime:'09:00', endTime:'09:45', teacher:'', room:'', note:'' },
+  '6_4': { subjectId:'hdtn_shl', name:'HĐTN SHL', startTime:'09:50', endTime:'10:35', teacher:'', room:'', note:'' },
+  '6_6': { subjectId:'lsdl_su', name:'LS-ĐL Sử', startTime:'14:05', endTime:'14:50', teacher:'', room:'', note:'' },
+  '6_7': { subjectId:'lsdl_dia', name:'LS-ĐL Địa', startTime:'14:55', endTime:'15:40', teacher:'', room:'', note:'' },
+  '6_8': { subjectId:'khtn_hoa', name:'KHTN Hóa', startTime:'15:45', endTime:'16:30', teacher:'', room:'', note:'' },
+  // Thứ 7
+  '7_1': { subjectId:'literature', name:'Văn', startTime:'07:30', endTime:'11:00', teacher:'', room:'', note:'' },
+  '7_6': { subjectId:'english', name:'Anh', startTime:'14:00', endTime:'16:00', teacher:'', room:'', note:'' },
+  // Chủ Nhật
+  '8_3': { subjectId:'math', name:'Toán', startTime:'09:30', endTime:'11:30', teacher:'', room:'', note:'' }
+};
+
+function getRelativeDateString(daysFromNow) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+const SAMPLE_HOMEWORK_1 = [];
+const SAMPLE_HOMEWORK_2 = [];
+const SAMPLE_HOMEWORK_3 = [];
+
+  </script>
+  <script>
+/**
+ * firebase-config.js - Cấu hình Firebase Firestore
+ * Đã kết nối với dự án: smart-schedule-b6b09
+ */
+
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBe7PHcmaVbMRTdjigFDBhEkQt2vsLIPwM",
+  authDomain: "smart-schedule-b6b09.firebaseapp.com",
+  databaseURL: "https://smart-schedule-b6b09-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "smart-schedule-b6b09",
+  storageBucket: "smart-schedule-b6b09.firebasestorage.app",
+  messagingSenderId: "2302631129",
+  appId: "1:2302631129:web:5a6c411c8d8e94dadfb2c8",
+  measurementId: "G-1R1KD1HES0"
+};
+
+// Ưu tiên đọc cấu hình từ localStorage nếu người dùng đã lưu tùy chỉnh
+let activeFirebaseConfig = DEFAULT_FIREBASE_CONFIG;
+try {
+  const saved = localStorage.getItem('tkb_firebase_config');
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    if (parsed && parsed.apiKey && parsed.apiKey !== 'YOUR_API_KEY') {
+      activeFirebaseConfig = parsed;
+    }
+  }
+} catch (e) {
+  console.warn('[Firebase] Lỗi đọc config từ localStorage:', e);
+}
+
+let db = null;
+let firebaseEnabled = false;
+
+try {
+  if (typeof firebase !== 'undefined' && activeFirebaseConfig.apiKey && activeFirebaseConfig.apiKey !== 'YOUR_API_KEY') {
+    if (!firebase.apps || !firebase.apps.length) {
+      firebase.initializeApp(activeFirebaseConfig);
+    }
+    db = firebase.firestore();
+    firebaseEnabled = true;
+    console.log('[Firebase] Đã kết nối Firestore thành công! Dự án: smart-schedule-b6b09');
+  } else {
+    console.log('[Firebase] Chưa cấu hình Firebase - website đang hoạt động ở chế độ Offline (localStorage)');
+  }
+} catch (e) {
+  console.warn('[Firebase] Lỗi khởi tạo:', e.message);
+  firebaseEnabled = false;
+}
+
+window.firebaseConfig = activeFirebaseConfig;
+window.firebaseDB = db;
+window.firebaseEnabled = firebaseEnabled;
+  </script>
+  <script>
+/**
+ * subjects.js - Quản lý môn học (thêm, xóa, sửa, màu sắc)
+ */
+
+class SubjectManager {
+  constructor() {
+    this.subjects = this.loadSubjects();
+  }
+
+  loadSubjects() {
+    try {
+      const data = localStorage.getItem('tkb_subjects');
+      if (data) return JSON.parse(data);
+    } catch (e) {}
+    this.subjects = [...DEFAULT_SUBJECTS];
+    this.saveSubjects();
+    return this.subjects;
+  }
+
+  saveSubjects() {
+    localStorage.setItem('tkb_subjects', JSON.stringify(this.subjects));
+    if (window.storageManager && typeof window.storageManager.syncToFirebase === 'function') {
+      window.storageManager.syncToFirebase();
+    }
+  }
+
+  getAll() { return this.subjects; }
+
+  getById(id) {
+    return this.subjects.find(s => s.id === id) || { id:'other', name:'Khác', shortName:'Khác', color:'#64748b', bgLight:'#f8fafc', border:'#e2e8f0' };
+  }
+
+  addSubject({ name, shortName, color }) {
+    const id = 'subj_' + Date.now();
+    const newSubject = {
+      id, name, shortName: shortName || name.substring(0, 4),
+      color: color || '#3b82f6',
+      bgLight: this.lightenColor(color || '#3b82f6', 0.9),
+      border: this.lightenColor(color || '#3b82f6', 0.6)
+    };
+    this.subjects.push(newSubject);
+    this.saveSubjects();
+    return newSubject;
+  }
+
+  deleteSubject(id) {
+    this.subjects = this.subjects.filter(s => s.id !== id);
+    this.saveSubjects();
+  }
+
+  resetDefaults() {
+    this.subjects = [...DEFAULT_SUBJECTS];
+    this.saveSubjects();
+  }
+
+  lightenColor(hex, factor) {
+    if (!hex || !hex.startsWith('#')) return '#f1f5f9';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const nr = Math.round(r + (255 - r) * factor);
+    const ng = Math.round(g + (255 - g) * factor);
+    const nb = Math.round(b + (255 - b) * factor);
+    return `#${nr.toString(16).padStart(2,'0')}${ng.toString(16).padStart(2,'0')}${nb.toString(16).padStart(2,'0')}`;
+  }
+}
+
+window.subjectManager = new SubjectManager();
+
+  </script>
+  <script>
+/**
+ * storage.js - Quản lý dữ liệu: Đa hồ sơ, TKB, Bài tập, Khung giờ
+ * Hỗ trợ Firebase Firestore (nếu đã cấu hình) + localStorage fallback
+ */
+
+const STORAGE_KEYS = {
+  PROFILES: 'tkb_profiles_v2',
+  ACTIVE_PROFILE_ID: 'tkb_active_profile_id_v2',
+  PERIOD_TIMES: 'tkb_period_times',
+  SCHEDULE_PREFIX: 'tkb_schedule_',
+  HOMEWORK_PREFIX: 'tkb_homework_'
+};
+
+class StorageManager {
+  constructor() {
+    this.migrateLegacyData();
+    this.setupFirebaseListener();
+  }
+
+  migrateLegacyData() {
+    // === MIGRATION v3: Force reinit with real student data (Thành & Thảo) ===
+    // Khi thay đổi flag này, toàn bộ localStorage sẽ được ghi đè bằng dữ liệu mới
+    const DATA_VERSION = 'tkb_data_v3';
+    if (localStorage.getItem(DATA_VERSION) === '1') {
+      // Đã khởi tạo v3 → chỉ đảm bảo periodTimes tồn tại
+      if (!localStorage.getItem(STORAGE_KEYS.PERIOD_TIMES)) {
+        localStorage.setItem(STORAGE_KEYS.PERIOD_TIMES, JSON.stringify(DEFAULT_PERIOD_TIMES));
+      }
+      return;
+    }
+
+    // Xóa dữ liệu cũ (profiles, schedules, homeworks, active profile)
+    localStorage.removeItem(STORAGE_KEYS.PROFILES);
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_PROFILE_ID);
+    localStorage.removeItem('tkb_migrated_v2');
+    Object.keys(localStorage).filter(k =>
+      k.startsWith(STORAGE_KEYS.SCHEDULE_PREFIX) || k.startsWith(STORAGE_KEYS.HOMEWORK_PREFIX)
+    ).forEach(k => localStorage.removeItem(k));
+
+    // Khởi tạo dữ liệu mới: 2 học sinh thật (Thành & Thảo)
+    localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(DEFAULT_PROFILES));
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE_ID, 'student_jin');
+    localStorage.setItem(STORAGE_KEYS.SCHEDULE_PREFIX + 'student_jin', JSON.stringify(SAMPLE_SCHEDULE_JIN));
+    localStorage.setItem(STORAGE_KEYS.SCHEDULE_PREFIX + 'student_su', JSON.stringify(SAMPLE_SCHEDULE_SU));
+    localStorage.setItem(STORAGE_KEYS.HOMEWORK_PREFIX + 'student_jin', JSON.stringify(SAMPLE_HOMEWORK_1));
+    localStorage.setItem(STORAGE_KEYS.HOMEWORK_PREFIX + 'student_su', JSON.stringify(SAMPLE_HOMEWORK_2));
+
+    // Khung giờ mặc định
+    if (!localStorage.getItem(STORAGE_KEYS.PERIOD_TIMES)) {
+      localStorage.setItem(STORAGE_KEYS.PERIOD_TIMES, JSON.stringify(DEFAULT_PERIOD_TIMES));
+    }
+
+    // Đánh dấu đã migrate v3
+    localStorage.setItem(DATA_VERSION, '1');
+    localStorage.setItem('tkb_migrated_v2', '1');
+  }
+
+  setupFirebaseListener() {
+    if (window.firebaseEnabled && window.firebaseDB) {
+      try {
+        window.firebaseDB.collection('tkb_data').doc('main')
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              const data = doc.data();
+              if (data.profiles) localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(data.profiles));
+              if (data.activeProfileId) localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE_ID, data.activeProfileId);
+              if (data.schedules) {
+                Object.keys(data.schedules).forEach(id => {
+                  localStorage.setItem(STORAGE_KEYS.SCHEDULE_PREFIX + id, JSON.stringify(data.schedules[id]));
+                });
+              }
+              if (data.homeworks) {
+                Object.keys(data.homeworks).forEach(id => {
+                  localStorage.setItem(STORAGE_KEYS.HOMEWORK_PREFIX + id, JSON.stringify(data.homeworks[id]));
+                });
+              }
+              if (data.periodTimes) {
+                localStorage.setItem(STORAGE_KEYS.PERIOD_TIMES, JSON.stringify(data.periodTimes));
+              }
+              if (data.subjects && Array.isArray(data.subjects) && window.subjectManager) {
+                localStorage.setItem('tkb_subjects', JSON.stringify(data.subjects));
+                window.subjectManager.subjects = data.subjects;
+              }
+              if (window.app) {
+                window.app.updateProfileUI();
+                window.app.renderCurrentTab();
+                if (typeof window.app.renderSubjectManagerList === 'function') window.app.renderSubjectManagerList();
+                if (typeof window.app.updateTodaySchedule === 'function') window.app.updateTodaySchedule();
+              }
+            }
+          }, (err) => {
+            console.warn('[Firebase] Lỗi listener:', err.message);
+          });
+      } catch (e) {
+        console.warn('[Firebase] Không thể setup listener:', e.message);
+      }
+    }
+  }
+
+  syncToFirebase() {
+    if (!window.firebaseEnabled || !window.firebaseDB) return;
+    try {
+      const profiles = this.getAllProfiles();
+      const schedules = {};
+      const homeworks = {};
+      profiles.forEach(p => {
+        schedules[p.id] = this.getSchedule(p.id);
+        homeworks[p.id] = this.getHomework(p.id);
+      });
+      const subjects = window.subjectManager ? window.subjectManager.getAll() : [];
+      window.firebaseDB.collection('tkb_data').doc('main').set({
+        profiles,
+        activeProfileId: this.getActiveProfileId(),
+        schedules,
+        homeworks,
+        periodTimes: this.getPeriodTimes(),
+        subjects,
+        updatedAt: new Date().toISOString()
+      }, { merge: true }).catch(e => console.warn('[Firebase] Lỗi sync:', e.message));
+    } catch (e) {
+      console.warn('[Firebase] Lỗi sync:', e.message);
+    }
+  }
+
+  // --- PROFILES ---
+  getAllProfiles() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PROFILES);
+      return data ? JSON.parse(data) : DEFAULT_PROFILES;
+    } catch { return DEFAULT_PROFILES; }
+  }
+
+  saveAllProfiles(profiles) {
+    localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(profiles));
+    this.syncToFirebase();
+  }
+
+  getActiveProfileId() {
+    const id = localStorage.getItem(STORAGE_KEYS.ACTIVE_PROFILE_ID);
+    if (id) return id;
+    const profiles = this.getAllProfiles();
+    const def = profiles[0] ? profiles[0].id : 'student_jin';
+    this.setActiveProfileId(def);
+    return def;
+  }
+
+  setActiveProfileId(id) {
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_PROFILE_ID, id);
+  }
+
+  getActiveProfile() {
+    const id = this.getActiveProfileId();
+    const profiles = this.getAllProfiles();
+    const p = profiles.find(item => item.id === id) || profiles[0] || DEFAULT_PROFILES[0];
+    if (p.showSunday === undefined) p.showSunday = true;
+    if (!p.eveningCount) p.eveningCount = 3;
+    return p;
+  }
+
+  saveProfile(profileData) {
+    const profiles = this.getAllProfiles();
+    const idx = profiles.findIndex(p => p.id === profileData.id);
+    if (idx !== -1) profiles[idx] = { ...profiles[idx], ...profileData };
+    else profiles.push(profileData);
+    this.saveAllProfiles(profiles);
+  }
+
+  createProfile({ studentName, className, schoolName, academicYear, color, showSunday, avatarImage }, copyFromId = null) {
+    const newId = 'student_' + Date.now();
+    const cleanName = studentName.trim() || 'Học Sinh Mới';
+    const newProfile = {
+      id: newId, studentName: cleanName,
+      className: className.trim() || 'Lớp mới', schoolName: schoolName.trim() || '',
+      academicYear: academicYear.trim() || '2026 - 2027',
+      color: color || '#3b82f6', avatar: cleanName[0].toUpperCase(),
+      avatarImage: avatarImage || null,
+      showSunday: showSunday !== false, morningCount: 5, afternoonCount: 5, eveningCount: 3
+    };
+    const profiles = this.getAllProfiles();
+    profiles.push(newProfile);
+    this.saveAllProfiles(profiles);
+    if (copyFromId) {
+      this.saveSchedule(this.getSchedule(copyFromId), newId);
+    } else {
+      this.saveSchedule({}, newId);
+    }
+    this.saveHomework([], newId);
+    this.setActiveProfileId(newId);
+    return newProfile;
+  }
+
+  deleteProfile(id) {
+    let profiles = this.getAllProfiles();
+    if (profiles.length <= 1) return { success: false, message: 'Cần giữ ít nhất 1 hồ sơ!' };
+    profiles = profiles.filter(p => p.id !== id);
+    this.saveAllProfiles(profiles);
+    localStorage.removeItem(STORAGE_KEYS.SCHEDULE_PREFIX + id);
+    localStorage.removeItem(STORAGE_KEYS.HOMEWORK_PREFIX + id);
+    if (this.getActiveProfileId() === id) this.setActiveProfileId(profiles[0].id);
+    return { success: true, message: 'Đã xóa hồ sơ!' };
+  }
+
+  // --- PERIOD TIMES ---
+  getPeriodTimes() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PERIOD_TIMES);
+      return data ? { ...DEFAULT_PERIOD_TIMES, ...JSON.parse(data) } : { ...DEFAULT_PERIOD_TIMES };
+    } catch { return { ...DEFAULT_PERIOD_TIMES }; }
+  }
+
+  savePeriodTimes(times) {
+    localStorage.setItem(STORAGE_KEYS.PERIOD_TIMES, JSON.stringify(times));
+  }
+
+  // --- SCHEDULE ---
+  getSchedule(profileId = null) {
+    const id = profileId || this.getActiveProfileId();
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.SCHEDULE_PREFIX + id);
+      return data ? JSON.parse(data) : {};
+    } catch { return {}; }
+  }
+
+  saveSchedule(schedule, profileId = null) {
+    const id = profileId || this.getActiveProfileId();
+    localStorage.setItem(STORAGE_KEYS.SCHEDULE_PREFIX + id, JSON.stringify(schedule));
+    this.syncToFirebase();
+  }
+
+  setPeriod(day, period, data, profileId = null) {
+    const id = profileId || this.getActiveProfileId();
+    const schedule = this.getSchedule(id);
+    const key = `${day}_${period}`;
+    if (!data || !data.subjectId) delete schedule[key];
+    else schedule[key] = data;
+    this.saveSchedule(schedule, id);
+  }
+
+  mergeSchedule(profileId = null, newSchedule = {}) {
+    const id = profileId || this.getActiveProfileId();
+    const schedule = this.getSchedule(id);
+    const merged = { ...schedule, ...newSchedule };
+    this.saveSchedule(merged, id);
+  }
+
+  clearSchedule(profileId = null) {
+    const id = profileId || this.getActiveProfileId();
+    localStorage.setItem(STORAGE_KEYS.SCHEDULE_PREFIX + id, JSON.stringify({}));
+    this.syncToFirebase();
+  }
+
+  // --- HOMEWORK ---
+  getHomework(profileId = null) {
+    const id = profileId || this.getActiveProfileId();
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.HOMEWORK_PREFIX + id);
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  }
+
+  saveHomework(list, profileId = null) {
+    const id = profileId || this.getActiveProfileId();
+    localStorage.setItem(STORAGE_KEYS.HOMEWORK_PREFIX + id, JSON.stringify(list));
+    this.syncToFirebase();
+  }
+
+  // --- EXPORT / IMPORT ---
+  exportData() {
+    const profiles = this.getAllProfiles();
+    const schedules = {}; const homeworks = {};
+    profiles.forEach(p => { schedules[p.id] = this.getSchedule(p.id); homeworks[p.id] = this.getHomework(p.id); });
+    return JSON.stringify({
+      version: '2.1', exportedAt: new Date().toISOString(),
+      profiles, activeProfileId: this.getActiveProfileId(),
+      schedules, homeworks, periodTimes: this.getPeriodTimes(),
+      subjects: window.subjectManager ? window.subjectManager.getAll() : []
+    }, null, 2);
+  }
+
+  importData(jsonString) {
+    try {
+      const data = JSON.parse(jsonString);
+      if (data.profiles && Array.isArray(data.profiles)) {
+        this.saveAllProfiles(data.profiles);
+        if (data.activeProfileId) this.setActiveProfileId(data.activeProfileId);
+        if (data.schedules) Object.keys(data.schedules).forEach(id => this.saveSchedule(data.schedules[id], id));
+        if (data.homeworks) Object.keys(data.homeworks).forEach(id => this.saveHomework(data.homeworks[id], id));
+      }
+      if (data.periodTimes) this.savePeriodTimes(data.periodTimes);
+      if (data.subjects && window.subjectManager) {
+        window.subjectManager.subjects = data.subjects;
+        window.subjectManager.saveSubjects();
+      }
+      return { success: true, message: 'Nhập dữ liệu thành công!' };
+    } catch (e) {
+      return { success: false, message: 'Lỗi định dạng JSON: ' + e.message };
+    }
+  }
+
+  resetAllData() {
+    [STORAGE_KEYS.PROFILES, STORAGE_KEYS.ACTIVE_PROFILE_ID, STORAGE_KEYS.PERIOD_TIMES, 'tkb_subjects', 'tkb_data_v3', 'tkb_migrated_v2'].forEach(k => localStorage.removeItem(k));
+    Object.keys(localStorage).filter(k => k.startsWith(STORAGE_KEYS.SCHEDULE_PREFIX) || k.startsWith(STORAGE_KEYS.HOMEWORK_PREFIX)).forEach(k => localStorage.removeItem(k));
+    this.migrateLegacyData();
+    window.subjectManager.resetDefaults();
+  }
+}
+
+window.storageManager = new StorageManager();
+
+  </script>
+  <script>
+/**
+ * timetable.js - Lưới thời gian absolute positioning, ô môn học định vị theo pixel thực
+ * Grid 15 phút chỉ là tham chiếu visually, lesson cells positioned by actual time coordinates
+ */
+
+class TimetableRenderer {
+  constructor() {
+    this.currentEditingCell = null;
+    this.slotMinutes = 15;
+    this.pxPerSlot = 20;
+    this.pxPerMinute = this.pxPerSlot / this.slotMinutes; // 1.3333px per minute
+  }
+
+  getSessions() {
+    return [
+      { id:'morning', name:'SÁNG', startMin:6*60, endMin:12*60, color:'#fffdf0', textColor:'#92400e' },
+      { id:'afternoon', name:'CHIỀU', startMin:12*60, endMin:18*60, color:'#f5f8ff', textColor:'#1e3a5f' },
+      { id:'evening', name:'TỐI', startMin:18*60, endMin:23*60, color:'#faf5ff', textColor:'#581c87' }
+    ];
+  }
+
+  getDaysList(showSunday) {
+    const days = [
+      {id:'2',name:'Thứ 2'},{id:'3',name:'Thứ 3'},{id:'4',name:'Thứ 4'},
+      {id:'5',name:'Thứ 5'},{id:'6',name:'Thứ 6'},{id:'7',name:'Thứ 7'}
+    ];
+    if (showSunday !== false) days.push({id:'8',name:'Chủ nhật'});
+    return days;
+  }
+
+  timeToMin(t) { if(!t) return null; const p=t.split(':'); return parseInt(p[0])*60+parseInt(p[1]); }
+  minToTime(m) { return `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+  minToHHMM(m) { return `${String(Math.floor(m/60)).padStart(2,'0')}${String(m%60).padStart(2,'0')}`; }
+
+  hhmmToMin(hhmm) {
+    if (!hhmm || hhmm.length < 3) return null;
+    return parseInt(hhmm.substring(0, hhmm.length - 2)) * 60 + parseInt(hhmm.substring(hhmm.length - 2));
+  }
+
+  /** Convert minutes-since-midnight to Y pixel offset within a session */
+  timeToY(min, sessionStartMin) {
+    return (min - sessionStartMin) * this.pxPerMinute;
+  }
+
+  /** Convert Y pixel offset to minutes-since-midnight (rounded to nearest minute) */
+  yToTime(y, sessionStartMin) {
+    return sessionStartMin + Math.round(y / this.pxPerMinute);
+  }
+
+  render() {
+    const profile = window.storageManager.getActiveProfile();
+    const schedule = window.storageManager.getSchedule();
+    const days = this.getDaysList(profile.showSunday !== false);
+    const sessions = this.getSessions();
+    const container = document.getElementById('timetable-container');
+    if (!container) return;
+
+    // Group schedule entries by dayId
+    const entriesByDay = {};
+    days.forEach(d => { entriesByDay[d.id] = []; });
+
+    Object.keys(schedule).forEach(key => {
+      const item = schedule[key];
+      if (!item || !item.name) return;
+      const parts = key.split('_');
+      const dayId = parts[0];
+      if (!entriesByDay[dayId]) return;
+
+      const startMin = item.startTime ? this.timeToMin(item.startTime) : (parts[1] ? this.hhmmToMin(parts[1]) : null);
+      const endMin = item.endTime ? this.timeToMin(item.endTime) : (startMin !== null ? startMin + 45 : null);
+      if (startMin === null || endMin === null) return;
+
+      entriesByDay[dayId].push({ item, key, startMin, endMin });
+    });
+
+    // Build HTML
+    let html = `
+      <div id="timetable-scroll-wrapper" class="timetable-scroll-wrapper w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-xs max-h-[calc(100vh-210px)] min-h-[400px]">
+        <div class="timetable-grid" style="position:relative; min-width:700px;">
+          <!-- Header -->
+          <div class="timetable-header-row" style="position:sticky; top:0; z-index:50; display:flex; background:#1e293b;">
+            <div style="width:40px; min-width:40px; display:flex; align-items:center; justify-content:center; border-right:1px solid #334155; position:sticky; left:0; z-index:60; background:#1e293b;">
+              <i data-lucide="clock" class="w-3.5 h-3.5 text-amber-300"></i>
+            </div>
+            <div style="width:45px; min-width:45px; display:flex; align-items:center; justify-content:center; border-right:1px solid #334155; color:#fff; font-size:10px; font-weight:700;">Giờ</div>
+            ${days.map(d => `
+              <div style="flex:1; min-width:0; text-align:center; padding:8px 4px; border-right:1px solid #334155; color:#fff; font-size:12px; font-weight:700; ${d.id==='7'||d.id==='8'?'background:#047857;':'background:#334155;'}">${d.name}</div>
+            `).join('')}
+          </div>
+    `;
+
+    // Render each session
+    sessions.forEach((session, sessionIdx) => {
+      const sessionHeight = (session.endMin - session.startMin) * this.pxPerMinute;
+
+      // Session label row — higher z-index for earlier sessions so overflowing cells appear on top
+      html += `
+        <div class="session-row" style="display:flex; border-bottom:2px solid #e2e8f0; position:relative; z-index:${30 - sessionIdx * 10};">
+          <!-- Session label (sticky left) -->
+          <div style="width:40px; min-width:40px; position:sticky; left:0; z-index:20; background:${session.color}; display:flex; align-items:flex-start; justify-content:center; border-right:1px solid #64748b; padding-top:2px;">
+            <span style="font-size:10px; font-weight:900; color:${session.textColor};">${session.name}</span>
+          </div>
+          <!-- Time column -->
+          <div style="width:45px; min-width:45px; position:relative; border-right:1px solid #64748b; background:${session.color};">
+      `;
+
+      // Hour labels in time column — background to cover grid lines
+      for (let h = Math.ceil(session.startMin / 60); h * 60 < session.endMin; h++) {
+        const y = this.timeToY(h * 60, session.startMin);
+        const isFirst = y === 0;
+        const topStyle = isFirst ? 'top:1px' : `top:${y}px`;
+        const transform = isFirst ? 'none' : 'translateY(-50%)';
+        html += `<div style="position:absolute; ${topStyle}; left:0; right:0; text-align:center; font-size:9px; color:#94a3b8; transform:${transform}; background:${session.color}; padding:0 2px; z-index:2;">${String(h).padStart(2,'0')}:00</div>`;
+      }
+
+      // Grid lines in time column (every 15 min) — skip hour marks to not cut through labels
+      for (let t = session.startMin; t <= session.endMin; t += this.slotMinutes) {
+        const y = this.timeToY(t, session.startMin);
+        const isHour = t % 60 === 0;
+        if (isHour && y > 0) continue; // skip hour lines — labels cover them
+        html += `<div style="position:absolute; top:${y}px; left:0; right:0; border-top:${isHour ? '1px solid #cbd5e1' : '1px solid #f1f5f9'};"></div>`;
+      }
+
+      html += `</div>`;
+
+      // Day columns
+      days.forEach(day => {
+        const dayEntries = entriesByDay[day.id] || [];
+        // Filter entries that start in this session
+        const sessionEntries = dayEntries.filter(e => e.startMin >= session.startMin && e.startMin < session.endMin);
+
+        html += `
+          <div class="day-column-abs" style="flex:1; min-width:0; position:relative; height:${sessionHeight}px; border-right:1px solid #e2e8f0; background:${session.color}40; overflow:visible;">
+            <!-- Grid lines -->
+        `;
+
+        // Grid lines (every 15 min)
+        for (let t = session.startMin; t <= session.endMin; t += this.slotMinutes) {
+          const y = this.timeToY(t, session.startMin);
+          const isHour = t % 60 === 0;
+          html += `<div style="position:absolute; top:${y}px; left:0; right:0; border-top:${isHour ? '1px solid #cbd5e1' : '1px solid #f1f5f9'}; z-index:0;"></div>`;
+        }
+
+        // Click-to-add overlay
+        html += `
+            <div class="click-overlay-abs" style="position:absolute; inset:0; cursor:pointer; z-index:1;"
+                 onclick="window.timetableRenderer._handleColumnClick(event, '${day.id}', ${session.startMin}, ${session.endMin})"></div>
+        `;
+
+        // Lesson cells — render at full height (no clip at session boundary, no continuation cell)
+        sessionEntries.forEach(entry => {
+          const subject = window.subjectManager.getById(entry.item.subjectId) || { color: '#64748b', bgLight: '#f8fafc' };
+          const top = this.timeToY(entry.startMin, session.startMin);
+          // Full height based on actual start→end, NOT clipped at session boundary
+          const height = (entry.endMin - entry.startMin) * this.pxPerMinute;
+          const cellHeight = Math.max(height - 4, 20);
+          const timeStr = `${entry.item.startTime || ''} - ${entry.item.endTime || ''}`;
+
+          html += this._renderLessonCell(entry, subject, top, cellHeight, timeStr);
+        });
+
+        html += `</div>`; // close day-column-abs
+      });
+
+      html += `</div>`; // close session-row
+    });
+
+    html += `</div></div>`; // close timetable-grid + scroll-wrapper
+
+    // Save scroll position before re-rendering DOM
+    const oldWrapper = document.getElementById('timetable-scroll-wrapper');
+    const savedScrollTop = oldWrapper ? oldWrapper.scrollTop : 0;
+    const savedScrollLeft = oldWrapper ? oldWrapper.scrollLeft : 0;
+
+    container.innerHTML = html;
+
+    // Restore scroll position after re-render
+    const newWrapper = document.getElementById('timetable-scroll-wrapper');
+    if (newWrapper) {
+      newWrapper.scrollTop = savedScrollTop;
+      newWrapper.scrollLeft = savedScrollLeft;
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+    this.renderPrintHeader(profile);
+  }
+
+  /** Render a single lesson cell as absolutely-positioned div */
+  _renderLessonCell(entry, subject, top, cellHeight, timeStr) {
+    return `
+      <div class="lesson-cell-abs print-color-box" 
+           style="position:absolute; top:${top + 2}px; left:2px; right:2px; height:${cellHeight}px; z-index:5; border-radius:8px; padding:4px; overflow:hidden; cursor:pointer; border-left:4px solid ${subject.color}; background-color:${subject.bgLight}; transition:all 0.15s;"
+           onclick="window.timetableRenderer.openEditModalByKey('${entry.key}')">
+        <div style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4px; font-size:11px; line-height:1;">
+            <span style="font-weight:600; color:#64748b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${timeStr}">${timeStr}</span>
+            ${entry.item.note ? `<span style="font-style:italic; color:#d97706; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:50%;" title="${entry.item.note}">${entry.item.note}</span>` : ''}
+          </div>
+          <div style="text-align:center; padding:2px 0;">
+            <span style="font-weight:700; font-size:13px; color:#1e293b; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${entry.item.name || 'Môn học'}">${entry.item.name || 'Môn học'}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; font-size:11px; color:#475569; font-weight:500; line-height:1;">
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:50%;" title="${entry.item.teacher || ''}">${entry.item.teacher || ''}</span>
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:50%; text-align:right;" title="${entry.item.room || ''}">${entry.item.room || ''}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  /** Handle click on empty area of a day column — open edit modal at clicked time */
+  _handleColumnClick(e, dayId, sessionStartMin, sessionEndMin) {
+    if (!window.app.isAdmin) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickY = e.clientY - rect.top;
+    let startMin = this.yToTime(clickY, sessionStartMin);
+    // Snap to nearest 5 minutes for convenience
+    startMin = Math.round(startMin / 5) * 5;
+    // Clamp within session
+    if (startMin < sessionStartMin) startMin = sessionStartMin;
+    if (startMin >= sessionEndMin) startMin = sessionEndMin - 45;
+    this.openEditModal(dayId, startMin);
+  }
+
+  renderPrintHeader(profile) {
+    const el = document.getElementById('print-profile-header');
+    if (el) {
+      el.innerHTML = `
+        <div class="text-center pb-3 border-b-2 border-slate-900 mb-4 print-header">
+          <h1 class="text-2xl font-black uppercase tracking-wider text-slate-900">THỜI KHÓA BIỂU</h1>
+          <div class="flex justify-center flex-wrap gap-6 text-sm text-slate-800 mt-1.5 font-medium">
+            <span><strong>Học sinh:</strong> ${profile.studentName||'...'}</span>
+            <span><strong>Lớp:</strong> ${profile.className||'...'}</span>
+            <span><strong>Trường:</strong> ${profile.schoolName||'...'}</span>
+          </div>
+        </div>`;
+    }
+  }
+
+  openEditModal(dayId, startMin) {
+    if (!window.app.isAdmin) { window.app.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const startTime = this.minToTime(startMin);
+    const hhmm = this.minToHHMM(startMin);
+    const key = `${dayId}_${hhmm}`;
+    const schedule = window.storageManager.getSchedule();
+    const existing = schedule[key] || {};
+    const endTime = this.minToTime(startMin + 45);
+    this._populateModal(dayId, key, existing, startTime, existing.endTime || endTime);
+  }
+
+  openEditModalByKey(key) {
+    if (!window.app.isAdmin) { window.app.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const schedule = window.storageManager.getSchedule();
+    const item = schedule[key] || {};
+    const dayId = key.split('_')[0];
+    this._populateModal(dayId, key, item, item.startTime || '07:00', item.endTime || '07:45');
+  }
+
+  _populateModal(dayId, key, data, defaultStart, defaultEnd) {
+    this.currentEditingCell = { dayId, originalKey: key };
+    const daysMap = {'2':'Thứ Hai','3':'Thứ Ba','4':'Thứ Tư','5':'Thứ Năm','6':'Thứ Sáu','7':'Thứ Bảy','8':'Chủ Nhật'};
+    const modalTitle = document.getElementById('periodModalTitle');
+    if (modalTitle) modalTitle.innerText = `${daysMap[dayId]} • ${defaultStart} - ${defaultEnd}`;
+
+    const subjectSelect = document.getElementById('modalSubjectSelect');
+    if (subjectSelect) {
+      const subjects = window.subjectManager.getAll();
+      subjectSelect.innerHTML = `<option value="">-- Chọn môn --</option>` + subjects.map(s =>
+        `<option value="${s.id}" ${data.subjectId===s.id?'selected':''}>${s.name} (${s.shortName})</option>`).join('');
+    }
+
+    const startTimeInput = document.getElementById('modalStartTime');
+    const endTimeInput = document.getElementById('modalEndTime');
+    if (startTimeInput) startTimeInput.value = data.startTime || defaultStart;
+    if (endTimeInput) endTimeInput.value = data.endTime || defaultEnd;
+    document.getElementById('modalTeacher').value = data.teacher || '';
+    document.getElementById('modalRoom').value = data.room || '';
+    document.getElementById('modalNote').value = data.note || '';
+
+    const deleteBtn = document.getElementById('modalDeleteBtn');
+    if (deleteBtn) deleteBtn.style.display = data.subjectId ? 'inline-flex' : 'none';
+
+    const modal = document.getElementById('periodModal');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  }
+
+  closeEditModal() {
+    const modal = document.getElementById('periodModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    this.currentEditingCell = null;
+  }
+
+  saveModalData() {
+    if (!this.currentEditingCell) return;
+    const { dayId, originalKey } = this.currentEditingCell;
+    const subjectId = document.getElementById('modalSubjectSelect').value;
+    if (!subjectId) { window.app.showToast('Vui lòng chọn môn!', 'warning'); return; }
+
+    const startTime = document.getElementById('modalStartTime').value;
+    const endTime = document.getElementById('modalEndTime').value;
+    if (!startTime || !endTime) { window.app.showToast('Thiếu thời gian!', 'warning'); return; }
+
+    const subject = window.subjectManager.getById(subjectId);
+
+    const data = {
+      subjectId, name: subject ? subject.name : 'Môn học',
+      startTime, endTime,
+      teacher: document.getElementById('modalTeacher').value.trim(),
+      room: document.getElementById('modalRoom').value.trim(),
+      note: document.getElementById('modalNote').value.trim()
+    };
+
+    const startMin = this.timeToMin(startTime);
+    const newKey = `${dayId}_${this.minToHHMM(startMin)}`;
+
+    if (originalKey && originalKey !== newKey) {
+      const oldPeriod = originalKey.split('_')[1];
+      window.storageManager.setPeriod(dayId, oldPeriod, null);
+    }
+    window.storageManager.setPeriod(dayId, this.minToHHMM(startMin), data);
+    this.closeEditModal();
+    this.render();
+    window.app.updateTodaySchedule();
+    window.app.showToast('Đã lưu!', 'success');
+  }
+
+  deleteModalData() {
+    if (!this.currentEditingCell) return;
+    const { dayId, originalKey } = this.currentEditingCell;
+    const oldPeriod = originalKey.split('_')[1];
+    window.storageManager.setPeriod(dayId, oldPeriod, null);
+    this.closeEditModal();
+    this.render();
+    window.app.updateTodaySchedule();
+    window.app.showToast('Đã xóa!', 'info');
+  }
+}
+
+window.timetableRenderer = new TimetableRenderer();
+
+  </script>
+  <script>
+/**
+ * homework.js - Quản lý bài tập về nhà: deadline, filter, confetti
+ */
+
+function formatDateVN(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return dateStr;
+}
+
+class HomeworkManager {
+  constructor() {
+    this.filter = 'all';
+  }
+
+  render() {
+    const profile = window.storageManager.getActiveProfile();
+    const list = window.storageManager.getHomework();
+    const container = document.getElementById('homework-list');
+    const badge = document.getElementById('homework-badge');
+    const header = document.getElementById('homework-student-name');
+
+    if (header) header.innerText = profile.studentName ? `của ${profile.studentName} (${profile.className||'Chưa có lớp'})` : '';
+    if (!container) return;
+
+    const pendingCount = list.filter(h => !h.completed).length;
+    if (badge) {
+      if (pendingCount > 0) { badge.innerText = pendingCount; badge.classList.remove('hidden'); }
+      else badge.classList.add('hidden');
+    }
+
+    let filtered = list;
+    if (this.filter === 'pending') filtered = list.filter(h => !h.completed);
+    else if (this.filter === 'completed') filtered = list.filter(h => h.completed);
+
+    filtered.sort((a, b) => {
+      if (a.completed !== b.completed) return a.completed ? 1 : -1;
+      return new Date(a.deadline || '9999') - new Date(b.deadline || '9999');
+    });
+
+    if (filtered.length === 0) {
+      container.className = 'w-full';
+      container.innerHTML = `
+        <div class="p-12 text-center bg-white rounded-3xl border border-slate-200 shadow-sm w-full">
+          <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="check-circle-2" class="w-8 h-8"></i></div>
+          <h4 class="font-bold text-slate-800 text-lg mb-1">Không có bài tập nào!</h4>
+          <p class="text-slate-500 text-sm">Tuyệt vời! ${profile.studentName||''} đã hoàn thành hết hoặc chưa có bài tập mới.</p>
+        </div>`;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    container.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full';
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    container.innerHTML = filtered.map(item => {
+      const subject = window.subjectManager.getById(item.subjectId);
+      let deadlineBadge = '';
+      if (item.deadline) {
+        const isOverdue = item.deadline < todayStr && !item.completed;
+        const isToday = item.deadline === todayStr;
+        if (isOverdue) {
+          deadlineBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 flex items-center gap-1"><i data-lucide="alert-circle" class="w-3 h-3"></i> Quá hạn (${formatDateVN(item.deadline)})</span>`;
+        } else if (isToday) {
+          deadlineBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> Hôm nay</span>`;
+        } else {
+          deadlineBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${formatDateVN(item.deadline)}</span>`;
+        }
+      }
+
+      return `
+        <div class="p-5 bg-white rounded-3xl border transition-all duration-200 shadow-xs flex flex-col justify-between ${item.completed ? 'border-emerald-200 bg-emerald-50/20 opacity-75' : 'border-slate-200 hover:border-blue-300 hover:shadow-md'}">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+              <span class="px-2.5 py-1 rounded-xl text-xs font-bold text-white shadow-xs" style="background-color:${subject.color};">${subject.name}</span>
+              ${deadlineBadge}
+            </div>
+            <div class="flex items-start gap-3 mt-2">
+              <button onclick="window.homeworkManager.toggleComplete('${item.id}')" class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors cursor-pointer shrink-0 ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-blue-500 text-transparent'}">
+                <i data-lucide="check" class="w-4 h-4"></i>
+              </button>
+              <div class="flex-1">
+                <h4 class="font-bold text-slate-800 text-base leading-snug ${item.completed ? 'line-through text-slate-400' : ''}">${item.title}</h4>
+                ${item.note ? `<p class="text-xs text-slate-500 mt-2 italic bg-slate-50 p-2 rounded-xl">${item.note}</p>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center justify-end pt-3 mt-3 border-t border-slate-100">
+            <button onclick="window.homeworkManager.deleteHomework('${item.id}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer text-xs flex items-center gap-1 admin-only" style="display:none;">
+              <i data-lucide="trash-2" class="w-4 h-4"></i><span>Xóa</span>
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
+    window.app.updateAdminUI();
+  }
+
+  setFilter(filterType) {
+    this.filter = filterType;
+    document.querySelectorAll('.hw-filter-btn').forEach(btn => {
+      if (btn.dataset.filter === filterType) {
+        btn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+        btn.classList.remove('bg-white', 'text-slate-600');
+      } else {
+        btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+        btn.classList.add('bg-white', 'text-slate-600');
+      }
+    });
+    this.render();
+  }
+
+  openAddModal() {
+    if (!window.app.isAdmin) { window.app.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const subjectSelect = document.getElementById('hwSubjectSelect');
+    if (subjectSelect) {
+      const subjects = window.subjectManager.getAll();
+      subjectSelect.innerHTML = `<option value="">-- Chọn môn --</option>` + subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    }
+    document.getElementById('hwTitle').value = '';
+    document.getElementById('hwDeadline').value = '';
+    document.getElementById('hwNote').value = '';
+    const modal = document.getElementById('addHomeworkModal');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  }
+
+  closeAddModal() {
+    const modal = document.getElementById('addHomeworkModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  saveHomework() {
+    const subjectId = document.getElementById('hwSubjectSelect').value;
+    const title = document.getElementById('hwTitle').value.trim();
+    const deadline = document.getElementById('hwDeadline').value;
+    const note = document.getElementById('hwNote').value.trim();
+    if (!title) { window.app.showToast('Vui lòng nhập nội dung!', 'warning'); return; }
+
+    const newItem = { id: 'hw_' + Date.now(), subjectId: subjectId || 'other', title, deadline, note, completed: false };
+    const list = window.storageManager.getHomework();
+    list.unshift(newItem);
+    window.storageManager.saveHomework(list);
+    this.closeAddModal();
+    this.render();
+    window.app.updateTodaySchedule();
+    window.app.showToast('Đã thêm bài tập!', 'success');
+  }
+
+  toggleComplete(id) {
+    const list = window.storageManager.getHomework();
+    const item = list.find(h => h.id === id);
+    if (item) {
+      item.completed = !item.completed;
+      window.storageManager.saveHomework(list);
+      this.render();
+      window.app.updateTodaySchedule();
+      if (item.completed) {
+        if (window.confetti) window.confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+        window.app.showToast('Tuyệt vời! Đã hoàn thành 🎉', 'success');
+      }
+    }
+  }
+
+  deleteHomework(id) {
+    let list = window.storageManager.getHomework();
+    list = list.filter(h => h.id !== id);
+    window.storageManager.saveHomework(list);
+    this.render();
+    window.app.updateTodaySchedule();
+    window.app.showToast('Đã xóa bài tập', 'info');
+  }
+}
+
+window.homeworkManager = new HomeworkManager();
+
+  </script>
+  <script>
+/**
+ * ocr-handler.js - Xử lý OCR ảnh thời khóa biểu
+ * - parseScheduleFromData: parse dùng bbox coordinates để xác định cột ngày chính xác
+ * - parseScheduleFromText: fallback text-only khi không có bbox
+ * - matchSubject: đồng bộ danh sách môn với subjectManager (không hardcode)
+ * - endTime: chỉ điền khi tìm thấy trong ảnh (không tự sinh +45 phút)
+ */
+
+class OCRHandler {
+  constructor() {
+    this.worker = null;
+    this.isInitializing = false;
+    this.extractedEntries = [];
+  }
+
+  async initWorker() {
+    if (this.worker) return;
+    if (this.isInitializing) {
+      window.appLogger && window.appLogger.info('OCR worker already initializing, waiting...');
+      while (this.isInitializing) {
+        await new Promise(r => setTimeout(r, 200));
+      }
+      return;
+    }
+    this.isInitializing = true;
+    window.appLogger && window.appLogger.info('Initializing Tesseract OCR worker (vie, PSM 6, OEM 1)...');
+    try {
+      const { createWorker } = Tesseract;
+      // PSM 6 = Assume a single uniform block of text (tốt cho bảng)
+      // OEM 1 = LSTM only (chính xác hơn legacy engine)
+      this.worker = await createWorker('vie', 1, {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            window.appLogger && window.appLogger.info('OCR progress', `${Math.round((m.progress || 0) * 100)}%`);
+          }
+        }
+      });
+      await this.worker.setParameters({
+        tessedit_pageseg_mode: '6'
+      });
+      window.appLogger && window.appLogger.info('OCR worker initialized (PSM 6, OEM 1)');
+    } catch (err) {
+      window.appLogger && window.appLogger.error('Failed to init OCR worker', err.message);
+      throw err;
+    } finally {
+      this.isInitializing = false;
+    }
+  }
+
+  async recognizeImage(imageSrc, onProgress = null) {
+    try {
+      if (onProgress) onProgress('Đang tải bộ nhận diện chữ tiếng Việt...');
+      window.appLogger && window.appLogger.info('OCR recognizeImage started');
+      await this.initWorker();
+      if (onProgress) onProgress('Đang tiền xử lý ảnh...');
+      let imageInput = imageSrc;
+      try {
+        imageInput = await this.preprocessImage(imageSrc);
+      } catch (e) {
+        window.appLogger && window.appLogger.warn('preprocessImage failed, using original', e.message);
+        imageInput = imageSrc;
+      }
+      if (onProgress) onProgress('Đang quét ảnh...');
+      const { data: { text } } = await this.worker.recognize(imageInput);
+      window.appLogger && window.appLogger.info('OCR recognizeImage completed', `Text length: ${text.length}`);
+      return text;
+    } catch (error) {
+      window.appLogger && window.appLogger.error('OCR Error', error.message);
+      throw new Error('Lỗi đọc ảnh: ' + error.message);
+    }
+  }
+
+  /**
+   * Tiền xử lý ảnh bằng canvas: grayscale + contrast + threshold
+   * Trả về canvas element để truyền trực tiếp cho Tesseract
+   */
+  async preprocessImage(imageSrc) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        // Upscale 2x luôn để Tesseract đọc rõ hơn
+        const scale = 2;
+        const w = img.width * scale;
+        const h = img.height * scale;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        // Dùng imageSmoothingEnabled = true khi upscale để mượt
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const d = imageData.data;
+
+        // Bước 1: Grayscale
+        const grays = new Float32Array(w * h);
+        for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+          grays[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+        }
+
+        // Bước 2: Otsu's method — tự động tìm ngưỡng threshold tối ưu
+        const histogram = new Array(256).fill(0);
+        for (let j = 0; j < grays.length; j++) {
+          histogram[Math.round(grays[j])]++;
+        }
+        const total = grays.length;
+        let sum = 0;
+        for (let t = 0; t < 256; t++) sum += t * histogram[t];
+        let sumB = 0, wB = 0, maxVar = 0, threshold = 128;
+        for (let t = 0; t < 256; t++) {
+          wB += histogram[t];
+          if (wB === 0) continue;
+          const wF = total - wB;
+          if (wF === 0) break;
+          sumB += t * histogram[t];
+          const mB = sumB / wB;
+          const mF = (sum - sumB) / wF;
+          const betweenVar = wB * wF * (mB - mF) * (mB - mF);
+          if (betweenVar > maxVar) { maxVar = betweenVar; threshold = t; }
+        }
+
+        // Bước 3: Contrast enhancement + threshold
+        const contrast = 1.4;
+        const intercept = 128 * (1 - contrast);
+        for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+          let gray = grays[j] * contrast + intercept;
+          gray = Math.max(0, Math.min(255, gray));
+          // Otsu threshold
+          const val = gray > threshold ? 255 : 0;
+          d[i] = d[i + 1] = d[i + 2] = val;
+        }
+        ctx.putImageData(imageData, 0, 0);
+        window.appLogger && window.appLogger.info('preprocessImage', `Original: ${img.width}x${img.height}, Processed: ${w}x${h}, Otsu threshold: ${threshold}`);
+        resolve(canvas);
+      };
+      img.onerror = () => reject(new Error('Không thể load ảnh để tiền xử lý'));
+      img.src = imageSrc;
+    });
+  }
+
+  /**
+   * OCR đầy đủ: trả về cả text và data (lines, words, bbox)
+   */
+  async recognizeImageFull(imageSrc, onProgress = null) {
+    try {
+      if (onProgress) onProgress('Đang tải bộ nhận diện chữ tiếng Việt (lần đầu có thể mất 10-30 giây)...');
+      window.appLogger && window.appLogger.info('OCR recognizeImageFull started');
+      await this.initWorker();
+      if (onProgress) onProgress('Đang tiền xử lý ảnh (grayscale + contrast)...');
+      let imageInput = imageSrc;
+      try {
+        imageInput = await this.preprocessImage(imageSrc);
+      } catch (e) {
+        window.appLogger && window.appLogger.warn('preprocessImage failed, using original', e.message);
+        imageInput = imageSrc;
+      }
+      if (onProgress) onProgress('Đang quét ảnh...');
+      const { data } = await this.worker.recognize(imageInput);
+      window.appLogger && window.appLogger.info('OCR recognizeImageFull completed', `Text length: ${(data.text || '').length}`);
+      if (onProgress) onProgress('Đang phân tích cấu trúc bảng...');
+      return { text: data.text || '', data };
+    } catch (error) {
+      window.appLogger && window.appLogger.error('OCR Error', error.message);
+      throw new Error('Lỗi đọc ảnh: ' + error.message);
+    }
+  }
+
+  // --- UTILITIES ---
+
+  /**
+   * Chuẩn hóa text tiếng Việt: bỏ dấu, lowercase, gộp space
+   */
+  normalizeText(str) {
+    if (!str) return '';
+    return String(str)
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  padTime(h, m) {
+    return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+  }
+
+  /**
+   * Match tên môn OCR với subjectManager (tên đầy đủ + viết tắt, fuzzy bỏ dấu)
+   * Trả về { subjectId, name }
+   */
+  matchSubject(name) {
+    if (!name || !name.trim()) return { subjectId: null, name: '' };
+    const subjects = (window.subjectManager ? window.subjectManager.getAll() : []);
+    const norm = this.normalizeText(name);
+
+    // 1. Match tên đầy đủ (tên dài nhất trước để match chính xác)
+    const byNameLen = [...subjects].sort((a, b) => (b.name || '').length - (a.name || '').length);
+    for (const s of byNameLen) {
+      if (!s.name) continue;
+      const sn = this.normalizeText(s.name);
+      if (sn && norm.includes(sn)) return { subjectId: s.id, name: s.name };
+    }
+
+    // 2. Match tên viết tắt (dài nhất trước, có word-boundary)
+    const byShortLen = [...subjects].sort((a, b) => (b.shortName || '').length - (a.shortName || '').length);
+    for (const s of byShortLen) {
+      if (!s.shortName) continue;
+      const sn = this.normalizeText(s.shortName);
+      if (!sn) continue;
+      try {
+        if (new RegExp(`(^|[^a-z0-9])${sn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`, 'i').test(norm)) {
+          return { subjectId: s.id, name: s.name };
+        }
+      } catch (e) { /* bỏ qua regex lỗi */ }
+    }
+
+    return { subjectId: null, name: name.trim() };
+  }
+
+  /**
+   * Phát hiện cột ngày dựa trên bbox của header "Thứ 2".."Chủ nhật"
+   * Trả về [{ id: '2', minX, maxX }, ...] cho 7 cột (Thứ 2 → Chủ nhật)
+   */
+  detectDayColumns(data) {
+    const lines = (data && data.lines) || [];
+    // Tính imgWidth: ưu tiên data.image_width, fallback = max x1 của tất cả words
+    let imgWidth = (data && data.image_width) || 0;
+    if (!imgWidth) {
+      lines.forEach(l => (l.words || []).forEach(w => {
+        if (w.bbox && w.bbox.x1 > imgWidth) imgWidth = w.bbox.x1;
+      }));
+    }
+    if (!imgWidth) imgWidth = 1400;
+
+    const centers = {}; // dayId -> xCenter của header
+    // Pattern chịu lỗi OCR: "thu 2", "tu 2" (thiếu h), "t2"
+    const headerSingleRe = /^(th|t)u\s*[.:]?\s*([2-7])$/;
+
+    lines.forEach(line => {
+      const words = line.words || [];
+      words.forEach((w, i) => {
+        if (!w.bbox) return;
+        const wt = this.normalizeText(w.text).replace(/[.,:;]+$/g, '');
+        const cx = (w.bbox.x0 + w.bbox.x1) / 2;
+
+        // "Thứ 2" / "Tứ 2" ghép thành 1 word
+        const m = wt.match(headerSingleRe);
+        if (m) { centers[m[2]] = cx; return; }
+
+        // "Thứ" / "Tứ" + "2" tách 2 word
+        if (wt === 'thu' || wt === 'tu') {
+          const next = words[i + 1];
+          if (next && next.bbox) {
+            const nt = this.normalizeText(next.text).replace(/[.,:;]+$/g, '');
+            if (/^[2-7]$/.test(nt)) centers[nt] = (next.bbox.x0 + next.bbox.x1) / 2;
+          }
+          return;
+        }
+
+        // "Chủ nhật" / "ChủNhật" / "CN"
+        if (wt === 'chu nhat' || wt === 'chunhat' || wt === 'cn' || wt === 'chu nhat:') centers['8'] = cx;
+      });
+
+      // Fallback: tìm "chủ nhật" trong text dòng (OCR có thể tách word lạ)
+      if (centers['8'] === undefined) {
+        const lt = this.normalizeText(line.text || '');
+        if (lt.includes('chu nhat') || lt.includes('chunhat')) {
+          words.forEach(w => {
+            if (!w.bbox) return;
+            const wt = this.normalizeText(w.text);
+            if (wt.includes('nhat') || wt === 'cn') centers['8'] = (w.bbox.x0 + w.bbox.x1) / 2;
+          });
+        }
+      }
+    });
+
+    window.appLogger && window.appLogger.info('detectDayColumns centers', JSON.stringify(centers));
+
+    const dayIds = ['2', '3', '4', '5', '6', '7', '8'];
+    const known = dayIds.filter(d => typeof centers[d] === 'number');
+
+    if (known.length >= 2) {
+      // Nội suy tâm cột cho các ngày không phát hiện được header
+      const xs = {};
+      dayIds.forEach(d => {
+        if (typeof centers[d] === 'number') { xs[d] = centers[d]; return; }
+        const di = parseInt(d);
+        const before = known.filter(k => parseInt(k) < di).sort((a, b) => parseInt(b) - parseInt(a))[0];
+        const after = known.filter(k => parseInt(k) > di).sort((a, b) => parseInt(a) - parseInt(b))[0];
+        if (before && after) {
+          xs[d] = (centers[before] + centers[after]) / 2;
+        } else if (before) {
+          const prevs = known.filter(k => parseInt(k) < di);
+          const gap = prevs.length >= 2 ? (centers[before] - centers[prevs[prevs.length - 2]]) : 100;
+          xs[d] = centers[before] + gap;
+        } else if (after) {
+          const nexts = known.filter(k => parseInt(k) > di);
+          const gap = nexts.length >= 2 ? (centers[nexts[1]] - centers[after]) : 100;
+          xs[d] = centers[after] - gap;
+        }
+      });
+
+      // Ranh giới cột = trung điểm giữa 2 tâm liên tiếp
+      const sortedDays = dayIds.filter(d => xs[d] !== undefined).sort((a, b) => xs[a] - xs[b]);
+      const cols = [];
+      sortedDays.forEach((d, i) => {
+        const minX = i === 0 ? 0 : (xs[d] + xs[sortedDays[i - 1]]) / 2;
+        const maxX = i === sortedDays.length - 1 ? imgWidth : (xs[d] + xs[sortedDays[i + 1]]) / 2;
+        cols.push({ id: d, minX, maxX });
+      });
+      window.appLogger && window.appLogger.info('detectDayColumns: interpolated', `Cols: ${cols.length}`);
+      return cols;
+    }
+
+    // Fallback: chia đều 7 cột, bỏ 11% bên trái cho cột giờ/buổi
+    const startX = imgWidth * 0.11;
+    const colWidth = (imgWidth - startX) / 7;
+    const fallbackCols = dayIds.map((d, i) => ({
+      id: d,
+      minX: startX + colWidth * i,
+      maxX: i === 6 ? imgWidth : startX + colWidth * (i + 1)
+    }));
+    window.appLogger && window.appLogger.info('detectDayColumns: equal-column fallback', `imgWidth=${imgWidth}, startX=${startX}, colWidth=${colWidth.toFixed(0)}`);
+    return fallbackCols;
+  }
+
+  // --- PARSE: BBOX MODE ---
+
+  /**
+   * Parse dùng bbox coordinates để xác định cột ngày.
+   * Trả về ScheduleEntry[] = [{ dayId, startTime, endTime, subjectId, name, teacher, room, note }]
+   * Fallback: parseScheduleFromText nếu không có bbox
+   */
+  parseScheduleFromData(data) {
+    const lines = (data && data.lines) || [];
+    window.appLogger && window.appLogger.info('parseScheduleFromData', `Lines: ${lines.length}`);
+    const hasBbox = lines.some(l => l.words && l.words.length && l.words.some(w => w.bbox));
+    window.appLogger && window.appLogger.info('parseScheduleFromData hasBbox', String(hasBbox));
+    if (!hasBbox) {
+      window.appLogger && window.appLogger.info('parseScheduleFromData: no bbox, falling back to text mode');
+      return this.parseScheduleFromText((data && data.text) || '');
+    }
+
+    const dayCols = this.detectDayColumns(data);
+    window.appLogger && window.appLogger.info('detectDayColumns result', `Cols: ${dayCols.length} — ${dayCols.map(c => c.id).join(',')}`);
+    if (!dayCols.length) {
+      window.appLogger && window.appLogger.warn('parseScheduleFromData: no day columns detected, falling back to text');
+      return this.parseScheduleFromText((data && data.text) || '');
+    }
+    const entries = [];
+
+    lines.forEach(line => {
+      const words = (line.words || []).filter(w => w.text && w.text.trim() && w.bbox);
+      if (!words.length) return;
+
+      // Gom nhóm words: nhóm mới bắt đầu khi gặp word là mốc thời gian (HH:MM)
+      let group = [];
+      const flush = () => {
+        if (group.length) {
+          this.parseWordGroup(group, dayCols, entries);
+          group = [];
+        }
+      };
+      words.forEach(w => {
+        const t = w.text.trim();
+        if (/^\[?\d{1,2}[:h.]\d{2}/.test(t) && group.length > 0) flush();
+        group.push(w);
+      });
+      flush();
+    });
+
+    if (!entries.length) {
+      window.appLogger && window.appLogger.warn('parseScheduleFromData: 0 entries after bbox parse, falling back to text');
+      return this.parseScheduleFromText((data && data.text) || '');
+    }
+    this.extractedEntries = entries;
+    return entries;
+  }
+
+  // Utility helpers for time conversion (used in parseScheduleFromData)
+  timeToMin(time) { if (!time) return null; const [h,m] = time.split(':'); return parseInt(h)*60 + parseInt(m); }
+  minToHHMM(min) { return `${String(Math.floor(min/60)).padStart(2,'0')}${String(min%60).padStart(2,'0')}`; }
+
+  // ---------------------------------------------------------------
+  // Parse OCR data using bounding boxes to determine day columns
+  // ---------------------------------------------------------------
+
+  /**
+   * Parse 1 nhóm words (1 ô trong ảnh) → entry
+   */
+  parseWordGroup(words, dayCols, entries) {
+    const fullStr = words.map(w => w.text).join(' ').trim();
+    if (!fullStr) return;
+    const norm = this.normalizeText(fullStr);
+
+    // Bỏ qua: ô nghỉ, tiêu đề, header ngày
+    if (!norm || norm === 'nghi' || norm.includes('nghi)') || norm.includes('(nghi')) return;
+    if (/^(th|t)u\s*[.:]?\s*[2-7]$/.test(norm)) return;
+    if (norm.includes('thu khoa bieu')) return;
+    // Bỏ qua label buổi học
+    if (/buoi\s*(sang|chieu|toi)/.test(norm)) return;
+    // Bỏ qua header line (chứa nhiều "tứ"/"thu"/"chủ nhật")
+    if ((norm.match(/(t[uh]u|chu nhat|chunhat)/g) || []).length >= 2) return;
+
+    // Xác định cột ngày theo x của word đầu tiên
+    const first = words[0];
+    const cx = (first.bbox.x0 + first.bbox.x1) / 2;
+    let dayId = null;
+    for (const col of dayCols) {
+      if (cx >= col.minX && cx < col.maxX) { dayId = col.id; break; }
+    }
+    if (!dayId) return;
+
+    // Trích thời gian: ưu tiên range "7:15-8:00", fallback 4-digit "0950-1029", fallback single
+    let startTime = '', endTime = '', remaining = fullStr;
+    const rangeM = remaining.match(/(\d{1,2})[:h.](\d{2})\s*[-–—~]\s*(\d{1,2})[:h.](\d{2})/);
+    if (rangeM) {
+      startTime = this.padTime(rangeM[1], rangeM[2]);
+      endTime = this.padTime(rangeM[3], rangeM[4]);
+      remaining = remaining.slice(0, rangeM.index) + ' ' + remaining.slice(rangeM.index + rangeM[0].length);
+    } else {
+      // Fallback: 4-digit format "0950-1029" → 09:50 - 10:29
+      const range4M = remaining.match(/(\d{2})(\d{2})\s*[-–—~]\s*(\d{2})(\d{2})/);
+      if (range4M) {
+        startTime = this.padTime(range4M[1], range4M[2]);
+        endTime = this.padTime(range4M[3], range4M[4]);
+        remaining = remaining.slice(0, range4M.index) + ' ' + remaining.slice(range4M.index + range4M[0].length);
+      } else {
+        const singleM = remaining.match(/(\d{1,2})[:h.](\d{2})/);
+        if (singleM) {
+          startTime = this.padTime(singleM[1], singleM[2]);
+          remaining = remaining.slice(0, singleM.index) + ' ' + remaining.slice(singleM.index + singleM[0].length);
+        }
+      }
+    }
+    remaining = remaining.replace(/[\[\]()]/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // Bỏ qua entry không có startTime (header rác, label, OCR noise)
+    if (!startTime) return;
+
+    // Trích room / teacher / subject từ phần còn lại
+    const info = { name: '', teacher: '', room: '', note: '' };
+    if (remaining) this.extractInfo(remaining, info);
+
+    const matched = this.matchSubject(info.name || remaining);
+
+    // Bỏ qua nếu không có tên môn (group bị cắt giữa chừng do OCR gộp nhiều ô)
+    if (!info.name && !matched.subjectId) return;
+
+    // Bỏ qua nếu phần còn lại chỉ là "Nghỉ"
+    if (this.normalizeText(remaining) === 'nghi') return;
+
+    entries.push({
+      dayId,
+      startTime,
+      endTime,
+      subjectId: matched.subjectId,
+      name: info.name || matched.name || remaining.substring(0, 30),
+      teacher: info.teacher || '',
+      room: info.room || '',
+      note: info.note || ''
+    });
+  }
+
+  // --- PARSE: TEXT FALLBACK ---
+
+  /**
+   * Parse text-only (fallback khi không có bbox).
+   * Trả về ScheduleEntry[] (array) thay vì object schedule.
+   */
+  parseScheduleFromText(text) {
+    const entries = [];
+    const lines = (text || '').split('\n').map(l => l.trim()).filter(l => l);
+    window.appLogger && window.appLogger.info('parseScheduleFromText', `Lines: ${lines.length}`);
+    if (lines.length === 0) return entries;
+
+    // Map các ngày (đã normalize bỏ dấu) — sắp xếp theo độ dài giảm dần để match chính xác
+    const daysMap = {
+      'chu nhat:': '8', 'chu nhat': '8',
+      'thu hai': '2', 'thu 2': '2', 'thu2': '2',
+      'thu ba': '3', 'thu 3': '3', 'thu3': '3',
+      'thu tu': '4', 'thu 4': '4', 'thu4': '4',
+      'thu nam': '5', 'thu 5': '5', 'thu5': '5',
+      'thu sau': '6', 'thu 6': '6', 'thu6': '6',
+      'thu bay': '7', 'thu 7': '7', 'thu7': '7',
+      'cn': '8'
+    };
+
+    let currentDay = null;
+    let currentEntry = null;
+
+    // Lưu entry hiện tại vào danh sách (chỉ push 1 lần duy nhất)
+    const saveCurrent = () => {
+      if (currentEntry) {
+        this.applySubjectMatch(currentEntry);
+        entries.push(currentEntry);
+        currentEntry = null;
+      }
+    };
+
+    for (const line of lines) {
+      const norm = this.normalizeText(line);
+
+      // Kiểm tra xem có phải là ngày không
+      let foundDay = null;
+      for (const [key, dayId] of Object.entries(daysMap)) {
+        if (norm.includes(key)) { foundDay = dayId; break; }
+      }
+      if (foundDay) {
+        saveCurrent();
+        currentDay = foundDay;
+        continue;
+      }
+      if (!currentDay) continue;
+
+      // Kiểm tra thời gian: range "7:15-8:00" hoặc single "7:15"
+      const rangeM = norm.match(/(\d{1,2})[:h.](\d{2})\s*[-–—~]\s*(\d{1,2})[:h.](\d{2})/);
+      let startTime = '', endTime = '', remaining = line;
+      if (rangeM) {
+        startTime = this.padTime(rangeM[1], rangeM[2]);
+        endTime = this.padTime(rangeM[3], rangeM[4]);
+        // Giữ nguyên ngoặc đơn để extractInfo trích ghi chú — chỉ bỏ ngoặc vuông
+        remaining = line.replace(rangeM[0], ' ').replace(/[\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+      } else {
+        const singleM = norm.match(/(\d{1,2})[:h.](\d{2})/);
+        if (singleM) {
+          startTime = this.padTime(singleM[1], singleM[2]);
+          remaining = line.replace(singleM[0], ' ').replace(/[\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+        } else {
+          // Không có thời gian — có thể là tên môn học tiếp tục cho entry hiện tại
+          if (currentEntry && line.trim()) {
+            currentEntry.name = (currentEntry.name + ' ' + line.trim()).trim();
+          }
+          continue;
+        }
+      }
+
+      // Lưu entry trước đó trước khi tạo entry mới (tránh trùng lặp)
+      saveCurrent();
+
+      // Trích room / teacher / subject từ phần còn lại
+      const info = { name: '', teacher: '', room: '', note: '' };
+      if (remaining) this.extractInfo(remaining, info);
+
+      currentEntry = {
+        dayId: currentDay,
+        startTime,
+        endTime,
+        subjectId: null,
+        name: info.name || remaining.substring(0, 30),
+        teacher: info.teacher || '',
+        room: info.room || '',
+        note: info.note || ''
+      };
+      // KHÔNG push ở đây — saveCurrent() sẽ xử lý khi gặp entry tiếp theo hoặc cuối loop
+    }
+
+    // Lưu entry cuối cùng
+    saveCurrent();
+    this.extractedEntries = entries;
+    window.appLogger && window.appLogger.info('parseScheduleFromText done', `Entries: ${entries.length}`);
+    return entries;
+  }
+
+  /**
+   * Trích xuất thông tin từ text: tên môn, giáo viên, phòng, ghi chú
+   * @param {string} text - phần text còn lại sau khi bỏ thời gian
+   * @param {object} info - { name, teacher, room, note } sẽ được điền
+   */
+  extractInfo(text, info) {
+    if (!text) return;
+    let remaining = text.trim();
+
+    // Trích ghi chú: phần trong ngoặc đơn — làm trước để không ảnh hưởng parse khác
+    const noteM = remaining.match(/\(([^)]+)\)/);
+    if (noteM) {
+      info.note = noteM[1].trim();
+      remaining = remaining.replace(noteM[0], ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Trích phòng học: "P.302", "P302", "Phòng 302", "P.Máy", "P.Lab", "P.TN", "Sân trường"
+    const roomM = remaining.match(/\bP\.?\s*[A-Za-zÀ-ỹ0-9]+|Phòng\s+[A-Za-zÀ-ỹ0-9]+|Sân(\s+trường)?/i);
+    if (roomM) {
+      info.room = roomM[0].replace(/\s+/g, ' ').trim();
+      remaining = remaining.replace(roomM[0], ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Trích giáo viên: "Cô X", "Thầy X" — phải có tên theo sau
+    const teacherM = remaining.match(/\b(Cô|Thầy)\s+([A-Za-zÀ-ỹ]{2,})/i);
+    if (teacherM) {
+      info.teacher = teacherM[0].trim();
+      remaining = remaining.replace(teacherM[0], ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Phần còn lại là tên môn học
+    info.name = remaining.replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * Áp dụng matchSubject cho entry: set subjectId và name chuẩn
+   * @param {object} entry - { name, subjectId, ... }
+   */
+  applySubjectMatch(entry) {
+    if (!entry || !entry.name) return;
+    const matched = this.matchSubject(entry.name);
+    entry.subjectId = matched.subjectId;
+    if (matched.name) entry.name = matched.name;
+  }
+}
+
+window.ocrHandler = new OCRHandler();
+  </script>
+  <script>
+/**
+ * app.js - Điều phối ứng dụng: Tabs, đồng hồ, Hôm nay, Admin, Export PNG/JSON
+ */
+
+class App {
+  constructor() {
+    this.currentTab = 'timetable';
+    this.timerInterval = null;
+    this.isProfileDropdownOpen = false;
+    this.isAdmin = localStorage.getItem('jinsu_isAdmin') === 'true';
+    this.adminPassword = 'admin123';
+    // Cache OCR preview entries for modal editing
+    this.ocrPreviewEntries = [];
+  }
+
+  init() {
+    try {
+      this.setupEventListeners();
+      this.initDropZone();
+      this.updateProfileUI();
+      this.renderCurrentTab();
+      this.startClockAndLiveStatus();
+      this.renderSubjectManagerList();
+      this.updateConnectionStatus();
+      this.updateAdminUI();
+      if (window.lucide) window.lucide.createIcons();
+    } catch (err) {
+      console.error('App init error:', err);
+    }
+  }
+
+  updateConnectionStatus() {
+    const el = document.getElementById('connectionStatus');
+    const badge = document.getElementById('cloudStatusBadge');
+    if (window.firebaseEnabled) {
+      if (el) {
+        el.innerText = '🟢 Online';
+        el.className = 'text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 cursor-pointer';
+        el.title = 'Đang đồng bộ đám mây qua Firebase Firestore';
+      }
+      if (badge) {
+        badge.innerText = 'Đã kết nối';
+        badge.className = 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800';
+      }
+    } else {
+      if (el) {
+        el.innerText = '🟡 Offline';
+        el.className = 'text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700 cursor-pointer';
+        el.title = 'Chế độ lưu nội bộ trình duyệt (localStorage)';
+      }
+      if (badge) {
+        badge.innerText = 'Chưa kết nối';
+        badge.className = 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800';
+      }
+    }
+  }
+
+  openFirebaseModal() {
+    if (!this.isAdmin) { this.showToast('Cần quyền Admin để cấu hình Firebase!', 'warning'); return; }
+    const modal = document.getElementById('firebaseConfigModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      const textarea = document.getElementById('firebaseConfigInput');
+      if (textarea) {
+        const current = localStorage.getItem('tkb_firebase_config');
+        if (current) {
+          try { textarea.value = JSON.stringify(JSON.parse(current), null, 2); } catch (e) { textarea.value = current; }
+        } else if (window.firebaseConfig && window.firebaseConfig.apiKey !== 'YOUR_API_KEY') {
+          textarea.value = JSON.stringify(window.firebaseConfig, null, 2);
+        } else {
+          textarea.value = '';
+        }
+      }
+    }
+  }
+
+  closeFirebaseModal() {
+    const modal = document.getElementById('firebaseConfigModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  saveFirebaseConfig() {
+    const textarea = document.getElementById('firebaseConfigInput');
+    if (!textarea || !textarea.value.trim()) {
+      this.showToast('Vui lòng dán đoạn cấu hình Firebase!', 'warning');
+      return;
+    }
+    try {
+      let val = textarea.value.trim();
+      // Auto extract JSON if user pasted javascript "const firebaseConfig = { ... };"
+      if (val.includes('{') && val.includes('}')) {
+        const start = val.indexOf('{');
+        const end = val.lastIndexOf('}');
+        val = val.substring(start, end + 1);
+      }
+      // Simple regex fix for unquoted JS keys like apiKey: "..." -> "apiKey": "..."
+      val = val.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":');
+      const parsed = JSON.parse(val);
+      if (!parsed.apiKey || !parsed.projectId) {
+        throw new Error('Thiếu apiKey hoặc projectId');
+      }
+      localStorage.setItem('tkb_firebase_config', JSON.stringify(parsed));
+      this.closeFirebaseModal();
+      this.showToast('Đã lưu cấu hình! Đang tải lại để kết nối...', 'success');
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+      this.showToast('Định dạng cấu hình không hợp lệ: ' + err.message, 'error');
+    }
+  }
+
+  clearFirebaseConfig() {
+    if (!confirm('Bạn có chắc muốn xóa cấu hình Firebase đã lưu trên máy này?')) return;
+    localStorage.removeItem('tkb_firebase_config');
+    this.closeFirebaseModal();
+    this.showToast('Đã xóa cấu hình Firebase. Đang tải lại...', 'info');
+    setTimeout(() => window.location.reload(), 1000);
+  }
+
+  syncAllToFirebaseNow() {
+    if (!this.isAdmin) { this.showToast('Cần quyền Admin!', 'warning'); return; }
+    if (!window.firebaseEnabled || !window.firebaseDB) {
+      this.showToast('Chưa kết nối Firebase! Vui lòng cấu hình trước.', 'warning');
+      this.openFirebaseModal();
+      return;
+    }
+    if (window.storageManager && typeof window.storageManager.syncToFirebase === 'function') {
+      window.storageManager.syncToFirebase();
+      this.showToast('Đã đẩy toàn bộ dữ liệu TKB lên đám mây!', 'success');
+    }
+  }
+
+  setupEventListeners() {
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
+    });
+
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) profileForm.addEventListener('submit', (e) => { e.preventDefault(); this.saveProfileFromUI(); });
+
+    // Avatar upload — settings form
+    const avatarFileInput = document.getElementById('avatarFileInput');
+    if (avatarFileInput) {
+      avatarFileInput.addEventListener('change', (e) => {
+        this.handleAvatarUpload(e.target.files[0], 'avatarPreview');
+        e.target.value = '';
+      });
+    }
+    const avatarRemoveBtn = document.getElementById('avatarRemoveBtn');
+    if (avatarRemoveBtn) avatarRemoveBtn.addEventListener('click', () => this.removeAvatar());
+
+    // Avatar upload — new profile modal
+    const newAvatarFile = document.getElementById('newProfileAvatarFile');
+    if (newAvatarFile) {
+      newAvatarFile.addEventListener('change', (e) => {
+        this.handleAvatarUpload(e.target.files[0], 'newProfileAvatarPreview');
+        e.target.value = '';
+      });
+    }
+
+    const importFileInput = document.getElementById('importFileInput');
+    if (importFileInput) {
+      importFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const res = window.storageManager.importData(event.target.result);
+          if (res.success) {
+            this.showToast('Nhập dữ liệu thành công!', 'success');
+            this.updateProfileUI(); this.renderCurrentTab(); this.renderSubjectManagerList(); this.updateTodaySchedule();
+          } else this.showToast(res.message, 'error');
+        };
+        reader.readAsText(file);
+      });
+    }
+
+    const importImageInput = document.getElementById('importImageInput');
+    if (importImageInput) {
+      importImageInput.addEventListener('change', (e) => this.handleImageImport(e));
+    }
+
+    const importExcelInput = document.getElementById('importExcelInput');
+    if (importExcelInput) {
+      importExcelInput.addEventListener('change', (e) => this.handleExcelImport(e));
+    }
+
+    // Excel drop zone
+    const excelDropZone = document.getElementById('excelDropZone');
+    if (excelDropZone) {
+      excelDropZone.addEventListener('click', (e) => {
+        if (e.target.tagName !== 'INPUT') {
+          const input = document.getElementById('importExcelInput');
+          if (input) input.click();
+        }
+      });
+      excelDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        excelDropZone.classList.remove('border-green-300', 'bg-green-50/50');
+        excelDropZone.classList.add('border-blue-500', 'bg-blue-50');
+      });
+      excelDropZone.addEventListener('dragleave', () => {
+        excelDropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        excelDropZone.classList.add('border-green-300', 'bg-green-50/50');
+      });
+      excelDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        excelDropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        excelDropZone.classList.add('border-green-300', 'bg-green-50/50');
+        const file = e.dataTransfer.files[0];
+        if (file) this.processExcelFile(file);
+      });
+    }
+
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('profileDropdown');
+      if (dropdown && !dropdown.contains(e.target) && !e.target.closest('button[onclick*="profileDropdown"]')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+  }
+
+  async handleImageImport(e) {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const file = e.target.files[0];
+    if (e.target) e.target.value = ''; // reset so same file can be re-selected
+    if (!file) { window.appLogger && window.appLogger.warn('handleImageImport: no file selected'); return; }
+    window.appLogger && window.appLogger.info('handleImageImport', `File: ${file.name}, Type: ${file.type}, Size: ${file.size}`);
+    await this.processImageFile(file);
+  }
+
+  async handleExcelImport(e) {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const file = e.target.files[0];
+    if (e.target) e.target.value = '';
+    if (!file) { window.appLogger && window.appLogger.warn('handleExcelImport: no file selected'); return; }
+    window.appLogger && window.appLogger.info('handleExcelImport', `File: ${file.name}, Type: ${file.type}, Size: ${file.size}`);
+    await this.processExcelFile(file);
+  }
+
+  /** Core: process an Excel file → parse → open preview modal */
+  async processExcelFile(file) {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+
+    window.appLogger && window.appLogger.info('processExcelFile started', `File: ${file?.name}, Size: ${file?.size}`);
+
+    const container = document.getElementById('excelProgressContainer');
+    const bar = document.getElementById('excelProgressBar');
+    const status = document.getElementById('excelProgressStatus');
+    if (container) container.classList.remove('hidden');
+    if (bar) bar.style.width = '20%';
+    if (status) status.innerText = 'Đang đọc file Excel...';
+
+    try {
+      let rows = null;
+
+      // ── Cách 1: Gửi file lên server Python (openpyxl) — ổn định nhất ──
+      if (bar) bar.style.width = '30%';
+      if (status) status.innerText = 'Đang gửi file lên server...';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const resp = await fetch('/api/read-excel', { method: 'POST', body: formData });
+        if (resp.ok) {
+          const result = await resp.json();
+          rows = result.rows || [];
+          window.appLogger && window.appLogger.info('Excel API success', `Sheets: ${result.sheets?.join(',')}, Rows: ${rows.length}`);
+          window.appLogger && window.appLogger.info('Excel activeSheet', result.activeSheet || '');
+        } else {
+          const errData = await resp.json().catch(() => ({}));
+          throw new Error(errData.error || `HTTP ${resp.status}`);
+        }
+      } catch (apiErr) {
+        window.appLogger && window.appLogger.warn('Excel API failed, falling back to SheetJS', apiErr.message);
+        if (status) status.innerText = 'Server không khả dụng, dùng SheetJS...';
+
+        // ── Cách 2 (fallback): SheetJS client-side ──
+        if (typeof XLSX === 'undefined') {
+          throw new Error('Server Excel không khả dụng và SheetJS chưa tải được. Hãy chạy server (run.bat) và refresh.');
+        }
+
+        const data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = () => reject(new Error('Không thể đọc file'));
+          reader.readAsBinaryString(file);
+        });
+
+        const workbook = XLSX.read(data, { type: 'binary' });
+        window.appLogger && window.appLogger.info('Excel sheets (SheetJS)', workbook.SheetNames.join(', '));
+
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', blankrows: false });
+      }
+
+      if (!rows || !rows.length) {
+        throw new Error('File Excel trống hoặc không đọc được dữ liệu.');
+      }
+
+      window.appLogger && window.appLogger.info('Excel rows', `Total: ${rows.length}`);
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        window.appLogger && window.appLogger.info(`Excel row[${i}]`, JSON.stringify(rows[i]));
+      }
+
+      if (bar) bar.style.width = '60%';
+      if (status) status.innerText = 'Đang trích xuất thời khóa biểu...';
+
+      const entries = this.parseScheduleFromExcel(rows);
+      window.appLogger && window.appLogger.info('parseScheduleFromExcel done', `Entries: ${entries.length}`);
+
+      if (bar) bar.style.width = '100%';
+      if (status) status.innerText = `Hoàn tất! Tìm thấy ${entries.length} mục.`;
+
+      setTimeout(() => { if (container) container.classList.add('hidden'); }, 1500);
+      this.openOCRPreviewModal(entries, null);
+    } catch (err) {
+      window.appLogger && window.appLogger.error('processExcelFile failed', err.message + (err.stack ? ' | ' + err.stack : ''));
+      this.showToast('Lỗi đọc Excel: ' + err.message, 'error');
+      if (container) container.classList.add('hidden');
+    }
+  }
+  /**
+   * Parse schedule entries from Excel rows (array of arrays).
+   * Hỗ trợ nhiều format:
+   * - Format 1: Hàng = tiết, Cột = ngày (header row có "Thứ 2", "Thứ 3"...)
+   * - Format 2: Mỗi hàng = 1 entry (cột: Ngày, Giờ, Môn, GV, Phòng)
+   * - Format 3: Hàng = buổi, cột = ngày, cell chứa "07:15-08:00\nToán"
+   */
+  parseScheduleFromExcel(rows) {
+    const entries = [];
+    if (!rows || !rows.length) return entries;
+
+    const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
+
+    const dayMap = [
+      { re: /^(th|t)u\s*[.:]?\s*2$|thu hai|thu2/, id: '2' },
+      { re: /^(th|t)u\s*[.:]?\s*3$|thu ba|thu3/, id: '3' },
+      { re: /^(th|t)u\s*[.:]?\s*4$|thu tu|thu4/, id: '4' },
+      { re: /^(th|t)u\s*[.:]?\s*5$|thu nam|thu5/, id: '5' },
+      { re: /^(th|t)u\s*[.:]?\s*6$|thu sau|thu6/, id: '6' },
+      { re: /^(th|t)u\s*[.:]?\s*7$|thu bay|thu7/, id: '7' },
+      { re: /chu nhat|chunhat|^cn$/, id: '8' }
+    ];
+
+    const matchDay = (text) => {
+      const n = norm(text);
+      for (const d of dayMap) { if (d.re.test(n)) return d.id; }
+      return null;
+    };
+
+    const parseTime = (str) => {
+      if (!str && str !== 0) return null;
+      const s = String(str).trim();
+      let m = s.match(/(\d{1,2})[:h](\d{2})/);
+      if (m) return { h: parseInt(m[1]), m: parseInt(m[2]) };
+      m = s.match(/^(\d{2})(\d{2})$/);
+      if (m) return { h: parseInt(m[1]), m: parseInt(m[2]) };
+      if (typeof str === 'number' && str > 0 && str < 1) {
+        const totalMin = Math.round(str * 24 * 60);
+        return { h: Math.floor(totalMin / 60), m: totalMin % 60 };
+      }
+      return null;
+    };
+
+    const padTime = (h, m) => String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+
+    // Detect format: scan first 10 rows for day headers
+    let headerRowIdx = -1;
+    let dayColMap = {};
+    let hasDayHeaders = false;
+
+    for (let r = 0; r < Math.min(rows.length, 10); r++) {
+      const row = rows[r] || [];
+      let found = 0;
+      const cols = {};
+      for (let c = 0; c < row.length; c++) {
+        const dayId = matchDay(row[c]);
+        if (dayId) { cols[c] = dayId; found++; }
+      }
+      if (found >= 2) {
+        headerRowIdx = r;
+        dayColMap = cols;
+        hasDayHeaders = true;
+        window.appLogger && window.appLogger.info('Excel: day headers found', `Row ${r}, cols: ${JSON.stringify(cols)}`);
+        break;
+      }
+    }
+    this._parseExcelByDayColumns(rows, headerRowIdx, dayColMap, hasDayHeaders, matchDay, parseTime, padTime, norm, entries);
+    window.appLogger && window.appLogger.info('parseScheduleFromExcel result', `Entries: ${entries.length}`);
+    return entries;
+  }
+
+  _parseExcelByDayColumns(rows, headerRowIdx, dayColMap, hasDayHeaders, matchDay, parseTime, padTime, norm, entries) {
+    if (hasDayHeaders) {
+      // Format 1/3: columns = days, rows = time slots
+      for (let r = headerRowIdx + 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        let startTime = '', endTime = '';
+
+        for (let c = 0; c < Math.min(row.length, 3); c++) {
+          const cellText = String(row[c] || '');
+          const rangeM = cellText.match(/(\d{1,2})[:h](\d{2})\s*[-–—~]\s*(\d{1,2})[:h](\d{2})/);
+          if (rangeM) {
+            startTime = padTime(rangeM[1], rangeM[2]);
+            endTime = padTime(rangeM[3], rangeM[4]);
+            break;
+          }
+          const singleT = parseTime(row[c]);
+          if (singleT) { startTime = padTime(singleT.h, singleT.m); break; }
+        }
+
+        for (const [colStr, dayId] of Object.entries(dayColMap)) {
+          const colIdx = parseInt(colStr);
+          const cellText = String(row[colIdx] || '').trim();
+          if (!cellText || /^\(?\s*nghi\s*\)?$/.test(norm(cellText))) continue;
+
+          // Mỗi dòng trong cell có thể là 1 entry riêng: "[07:15-08:00] Tin học"
+          const cellLines = cellText.split(/\n|\r/).map(l => l.trim()).filter(l => l);
+          let lastStart = startTime, lastEnd = endTime;
+
+          for (const line of cellLines) {
+            // Bỏ qua dòng "Nghỉ" / "(Nghỉ)"
+            if (/^\(?\s*nghi\s*\)?$/.test(norm(line))) continue;
+
+            // Trích time range và text từ dòng
+            const rangeM = line.match(/(\d{1,2})[:h](\d{2})\s*[-–—~]\s*(\d{1,2})[:h](\d{2})/);
+            let lineStart = lastStart, lineEnd = lastEnd;
+            let lineText = line;
+
+            if (rangeM) {
+              lineStart = padTime(rangeM[1], rangeM[2]);
+              lineEnd = padTime(rangeM[3], rangeM[4]);
+              lastStart = lineStart;
+              lastEnd = lineEnd;
+              // Lấy phần text sau time range
+              lineText = line.replace(/[\[\(]?\d{1,2}[:h]\d{2}\s*[-–—~]\s*\d{1,2}[:h]\d{2}[\]\)]?/, '').trim();
+            }
+
+            // Bỏ qua dòng chỉ có time, không có text
+            if (!lineText) continue;
+
+            const info = { name: '', teacher: '', room: '', note: '' };
+            if (window.ocrHandler) window.ocrHandler.extractInfo(lineText, info);
+            else info.name = lineText;
+
+            const matched = window.ocrHandler ? window.ocrHandler.matchSubject(info.name || lineText) : { subjectId: null, name: info.name || lineText };
+
+            entries.push({
+              dayId, startTime: lineStart, endTime: lineEnd,
+              subjectId: matched.subjectId,
+              name: info.name || matched.name || lineText.substring(0, 30),
+              teacher: info.teacher || '', room: info.room || '', note: info.note || ''
+            });
+          }
+        }
+      }
+    } else {
+      // Format 2: each row = 1 entry, detect columns from header
+      let colMap = {};
+      let headerIdx = -1;
+
+      for (let r = 0; r < Math.min(rows.length, 5); r++) {
+        const row = rows[r] || [];
+        let found = 0;
+        for (let c = 0; c < row.length; c++) {
+          const h = norm(row[c]);
+          if (/ngay|thu|chu nhat/.test(h) && colMap.day === undefined) { colMap.day = c; found++; }
+          if (/(bat dau|start|tu|gio bat)/.test(h) && colMap.start === undefined) { colMap.start = c; found++; }
+          if (/(ket thuc|end|den|gio ket)/.test(h) && colMap.end === undefined) { colMap.end = c; found++; }
+          if (/(mon|subject|ten mon)/.test(h) && colMap.subject === undefined) { colMap.subject = c; found++; }
+          if (/(giao vien|teacher|gv)/.test(h) && colMap.teacher === undefined) { colMap.teacher = c; found++; }
+          if (/(phong|room)/.test(h) && colMap.room === undefined) { colMap.room = c; found++; }
+        }
+        if (found >= 2) { headerIdx = r; break; }
+      }
+
+      const startRow = headerIdx >= 0 ? headerIdx + 1 : 0;
+      for (let r = startRow; r < rows.length; r++) {
+        const row = rows[r] || [];
+        if (!row.length) continue;
+
+        let dayId = null;
+        if (colMap.day !== undefined) dayId = matchDay(row[colMap.day]);
+        if (!dayId) continue;
+
+        let startTime = '', endTime = '';
+        if (colMap.start !== undefined) {
+          const t = parseTime(row[colMap.start]);
+          if (t) startTime = padTime(t.h, t.m);
+        }
+        if (colMap.end !== undefined) {
+          const t = parseTime(row[colMap.end]);
+          if (t) endTime = padTime(t.h, t.m);
+        }
+        if (!startTime) {
+          for (let c = 0; c < row.length; c++) {
+            const t = parseTime(row[c]);
+            if (t) { startTime = padTime(t.h, t.m); break; }
+          }
+        }
+
+        const name = colMap.subject !== undefined ? String(row[colMap.subject] || '').trim() : '';
+        const teacher = colMap.teacher !== undefined ? String(row[colMap.teacher] || '').trim() : '';
+        const room = colMap.room !== undefined ? String(row[colMap.room] || '').trim() : '';
+        if (!startTime && !name) continue;
+
+        const matched = window.ocrHandler ? window.ocrHandler.matchSubject(name) : { subjectId: null, name };
+        entries.push({
+          dayId, startTime, endTime,
+          subjectId: matched.subjectId,
+          name: name || matched.name || '',
+          teacher, room, note: ''
+        });
+      }
+    }
+  }
+
+  async pasteImageFromClipboard() {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+
+    try {
+      const items = await navigator.clipboard.read();
+      let imageFile = null;
+
+      for (const item of items) {
+        if (item.types.includes('image/png')) {
+          imageFile = await item.getType('image/png');
+          break;
+        } else if (item.types.includes('image/jpeg')) {
+          imageFile = await item.getType('image/jpeg');
+          break;
+        } else if (item.types.includes('image/webp')) {
+          imageFile = await item.getType('image/webp');
+          break;
+        }
+      }
+
+      if (!imageFile) {
+        this.showToast('Không tìm thấy ảnh trong clipboard', 'warning');
+        return;
+      }
+
+      // Give the blob a filename
+      const ext = imageFile.type.split('/')[1] || 'png';
+      const file = new File([imageFile], `clipboard_${Date.now()}.${ext}`, { type: imageFile.type });
+      await this.processImageFile(file);
+    } catch (err) {
+      console.error('Clipboard error:', err);
+      this.showToast('Không thể đọc clipboard: ' + err.message, 'error');
+    }
+  }
+
+  /** Initialize drag-and-drop zone */
+  initDropZone() {
+    const dropZone = document.getElementById('ocrDropZone');
+    if (!dropZone) { window.appLogger && window.appLogger.error('initDropZone: #ocrDropZone not found'); return; }
+    window.appLogger && window.appLogger.info('initDropZone: listeners attached');
+
+    // Click to open file dialog
+    dropZone.addEventListener('click', (e) => {
+      // Only trigger if clicking the drop zone itself, not the input
+      if (e.target.tagName !== 'INPUT') {
+        const input = document.getElementById('importImageInput');
+        if (input) input.click();
+      }
+    });
+
+    dropZone.addEventListener('dragover', (e) => this.handleDragOver(e));
+    dropZone.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+    dropZone.addEventListener('drop', (e) => this.handleDrop(e));
+  }
+
+  handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropZone = document.getElementById('ocrDropZone');
+    if (dropZone) {
+      dropZone.classList.remove('border-orange-300', 'bg-orange-50/50');
+      dropZone.classList.add('border-blue-500', 'bg-blue-50');
+    }
+  }
+
+  handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropZone = document.getElementById('ocrDropZone');
+    if (dropZone) {
+      dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+      dropZone.classList.add('border-orange-300', 'bg-orange-50/50');
+    }
+  }
+
+  async handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.handleDragLeave(e); // reset visual
+
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) { window.appLogger && window.appLogger.warn('handleDrop: no files'); return; }
+
+    const file = files[0];
+    window.appLogger && window.appLogger.info('handleDrop', `File: ${file.name}, Type: ${file.type}, Size: ${file.size}`);
+    if (!file.type.startsWith('image/')) {
+      window.appLogger && window.appLogger.warn('handleDrop: not an image', file.type);
+      this.showToast('Vui lòng thả file ảnh!', 'warning');
+      return;
+    }
+
+    await this.processImageFile(file);
+  }
+
+  /** Show image preview before OCR */
+  async showImagePreview(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = document.getElementById('ocrImagePreview');
+        const container = document.getElementById('ocrImagePreviewContainer');
+        if (img) img.src = ev.target.result;
+        if (container) container.classList.remove('hidden');
+        resolve(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /** Update OCR progress bar */
+  updateOCRProgress(percent, message) {
+    const container = document.getElementById('ocrProgressContainer');
+    const bar = document.getElementById('ocrProgressBar');
+    const status = document.getElementById('ocrProgressStatus');
+    if (container) container.classList.remove('hidden');
+    if (bar) bar.style.width = percent + '%';
+    if (status && message) status.innerText = message;
+  }
+
+  /** Core: process an image file → preview → OCR → parse → open modal */
+  async processImageFile(file) {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+
+    window.appLogger && window.appLogger.info('processImageFile started', `File: ${file?.name}, Size: ${file?.size}, Type: ${file?.type}`);
+
+    // Show image preview (also converts to data URL)
+    const imageURL = await this.showImagePreview(file);
+    window.appLogger && window.appLogger.info('Image converted to data URL', `Length: ${imageURL?.length || 0}`);
+
+    // Show progress
+    this.updateOCRProgress(10, 'Đang tải bộ nhận diện chữ tiếng Việt...');
+
+    try {
+      this.updateOCRProgress(30, 'Đang quét ảnh...');
+      window.appLogger && window.appLogger.info('Calling recognizeImageFull with data URL...');
+      // Truyền data URL thay vì File object — Tesseract.js v5 đọc data URL ổn định hơn
+      const ocrResult = await window.ocrHandler.recognizeImageFull(imageURL, (msg) => {
+        this.updateOCRProgress(50, msg);
+      });
+
+      window.appLogger && window.appLogger.info('OCR result received', `Text length: ${ocrResult?.text?.length || 0}, hasData: ${!!ocrResult?.data}`);
+      // Log raw text (first 1000 chars) để debug parse
+      if (ocrResult?.text) {
+        window.appLogger && window.appLogger.info('OCR raw text (first 1000 chars)', ocrResult.text.substring(0, 1000));
+      } else {
+        window.appLogger && window.appLogger.warn('OCR returned empty text!');
+      }
+      // Log lines/words info
+      if (ocrResult?.data?.lines) {
+        window.appLogger && window.appLogger.info('OCR data.lines count', ocrResult.data.lines.length);
+        const hasBbox = ocrResult.data.lines.some(l => l.words && l.words.length && l.words.some(w => w.bbox));
+        window.appLogger && window.appLogger.info('OCR hasBbox', String(hasBbox));
+      }
+      this.updateOCRProgress(75, 'Đang phân tích cấu trúc bảng...');
+
+      let entries = [];
+      if (ocrResult && ocrResult.data) {
+        window.appLogger && window.appLogger.info('Parsing with parseScheduleFromData (bbox mode)...');
+        const schedule = window.ocrHandler.parseScheduleFromData(ocrResult.data);
+        entries = Array.isArray(schedule) ? schedule : Object.values(schedule);
+        window.appLogger && window.appLogger.info('parseScheduleFromData done', `Entries: ${entries.length}`);
+      } else if (ocrResult && ocrResult.text) {
+        window.appLogger && window.appLogger.info('Parsing with parseScheduleFromText (fallback mode)...');
+        entries = window.ocrHandler.parseScheduleFromText(ocrResult.text);
+        window.appLogger && window.appLogger.info('parseScheduleFromText done', `Entries: ${entries.length}`);
+      }
+
+      // Log entry details for debugging
+      if (entries.length > 0) {
+        const summary = entries.map(e => `${e.dayId} ${e.startTime}-${e.endTime} ${e.name || '(no name)'} subj=${e.subjectId || 'null'}`).join('; ');
+        window.appLogger && window.appLogger.info('OCR entries summary', summary);
+      } else {
+        window.appLogger && window.appLogger.warn('No entries parsed from OCR result!');
+      }
+
+      this.updateOCRProgress(100, `Hoàn tất! Tìm thấy ${entries.length} mục.`);
+
+      // Hide progress after a short delay
+      setTimeout(() => {
+        const container = document.getElementById('ocrProgressContainer');
+        if (container) container.classList.add('hidden');
+      }, 1500);
+
+      this.openOCRPreviewModal(entries, imageURL);
+    } catch (err) {
+      window.appLogger && window.appLogger.error('processImageFile failed', err.message + (err.stack ? ' | ' + err.stack : ''));
+      this.showToast('Lỗi OCR: ' + err.message, 'error');
+      const container = document.getElementById('ocrProgressContainer');
+      if (container) container.classList.add('hidden');
+    }
+  }
+
+  // --- ADMIN ---
+  toggleAdminLogin() {
+    if (this.isAdmin) {
+      this.isAdmin = false;
+      localStorage.setItem('jinsu_isAdmin', 'false');
+      this.updateAdminUI();
+      this.showToast('Đã đăng xuất Admin', 'info');
+    } else {
+      const modal = document.getElementById('adminLoginModal');
+      if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+      const input = document.getElementById('adminPasswordInput');
+      if (input) { input.value = ''; setTimeout(() => input.focus(), 100); }
+    }
+  }
+
+  closeAdminLogin() {
+    const modal = document.getElementById('adminLoginModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  adminLogin() {
+    const input = document.getElementById('adminPasswordInput');
+    if (input && input.value === this.adminPassword) {
+      this.isAdmin = true;
+      localStorage.setItem('jinsu_isAdmin', 'true');
+      this.closeAdminLogin();
+      this.updateAdminUI();
+      this.showToast('Đăng nhập Admin thành công!', 'success');
+      // Pre-initialize OCR worker in background để lần đầu upload ảnh nhanh hơn
+      if (window.ocrHandler && !window.ocrHandler.worker) {
+        window.ocrHandler.initWorker().catch(() => {});
+      }
+    } else {
+      this.showToast('Sai mật khẩu!', 'error');
+    }
+  }
+
+  updateAdminUI() {
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = this.isAdmin ? '' : 'none';
+    });
+    const btnText = document.getElementById('adminBtnText');
+    if (btnText) btnText.innerText = this.isAdmin ? 'Thoát Admin' : 'Admin';
+    const adminBtn = document.getElementById('adminBtn');
+    if (adminBtn) {
+      if (this.isAdmin) {
+        adminBtn.classList.remove('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700');
+        adminBtn.classList.add('bg-emerald-100', 'hover:bg-emerald-200', 'text-emerald-700');
+      } else {
+        adminBtn.classList.add('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700');
+        adminBtn.classList.remove('bg-emerald-100', 'hover:bg-emerald-200', 'text-emerald-700');
+      }
+    }
+  }
+
+  // --- PROFILE ---
+  updateProfileUI() {
+    const active = window.storageManager.getActiveProfile();
+    const profiles = window.storageManager.getAllProfiles();
+    const todayStudentEl = document.getElementById('today-student-tag');
+    if (todayStudentEl) todayStudentEl.innerText = active.studentName ? `${active.studentName} (${active.className||'Chưa có lớp'})` : 'Chưa đặt tên';
+
+    const profileButtonsHTML = profiles.map(p => `
+      <button onclick="window.app.switchProfile('${p.id}');" class="flex items-center gap-2 pl-1.5 pr-4 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${p.id===active.id?'text-white shadow-md scale-105 ring-2 ring-slate-400':'bg-slate-200/60 text-slate-400 hover:text-slate-600 hover:bg-slate-200 opacity-60 hover:opacity-100'}" ${p.id===active.id?'style="background-color:#334155;"':''}>
+        ${this._renderAvatarHTML(p, 'w-6 h-6 text-[10px]')}
+        <span>${p.studentName||'Chưa đặt tên'}</span>
+      </button>`).join('');
+
+    const containerIds = ['profile-pills-container', 'profile-pills-container-today', 'profile-pills-container-homework', 'profile-pills-container-subjects', 'profile-pills-container-settings'];
+    containerIds.forEach(id => {
+      const container = document.getElementById(id);
+      if (container) container.innerHTML = profileButtonsHTML;
+    });
+
+    this.loadProfileToUI();
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  /** Render avatar HTML: image if available, otherwise colored circle with initial */
+  _renderAvatarHTML(profile, sizeClass = 'w-10 h-10 text-sm') {
+    if (profile.avatarImage) {
+      return `<img src="${profile.avatarImage}" class="${sizeClass} rounded-full object-cover shrink-0" alt="${profile.studentName||''}">`;
+    }
+    const initial = (profile.avatar || (profile.studentName || 'A')[0] || '?').toUpperCase();
+    return `<span class="${sizeClass} rounded-full flex items-center justify-center font-black text-white shrink-0" style="background-color:${profile.color||'#3b82f6'};">${initial}</span>`;
+  }
+
+  switchProfile(profileId) {
+    window.storageManager.setActiveProfileId(profileId);
+    this.updateProfileUI();
+    this.renderCurrentTab();
+    const active = window.storageManager.getActiveProfile();
+    this.showToast(`Đã chuyển sang ${active.studentName}!`, 'success');
+  }
+
+  openNewProfileModal() {
+    document.getElementById('newProfileName').value = '';
+    document.getElementById('newProfileClass').value = '';
+    document.getElementById('newProfileSchool').value = 'THCS Võ Cường';
+    document.getElementById('newProfileYear').value = '2026 - 2027';
+    this._pendingNewAvatar = undefined;
+    // Reset avatar preview
+    const newPreview = document.getElementById('newProfileAvatarPreview');
+    if (newPreview) { newPreview.innerHTML = '?'; newPreview.style.backgroundColor = '#3b82f6'; }
+    const newAvatarFile = document.getElementById('newProfileAvatarFile');
+    if (newAvatarFile) newAvatarFile.value = '';
+    const copySelect = document.getElementById('newProfileCopyFrom');
+    if (copySelect) {
+      const profiles = window.storageManager.getAllProfiles();
+      copySelect.innerHTML = `<option value="">-- Tạo bảng trống --</option>` + profiles.map(p => `<option value="${p.id}">Sao chép từ: ${p.studentName} (${p.className})</option>`).join('');
+    }
+    const colorChips = document.getElementById('newProfileColorChips');
+    if (colorChips) {
+      const colors = ['#3b82f6','#ec4899','#10b981','#f59e0b','#8b5cf6','#06b6d4','#ef4444'];
+      colorChips.innerHTML = colors.map((c, i) => `
+        <label class="cursor-pointer">
+          <input type="radio" name="newProfileColor" value="${c}" class="hidden peer" ${i===0?'checked':''}>
+          <div class="w-7 h-7 rounded-full transition-transform peer-checked:scale-125 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-blue-500" style="background-color:${c};"></div>
+        </label>`).join('');
+    }
+    const modal = document.getElementById('newProfileModal');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  }
+
+  closeNewProfileModal() {
+    const modal = document.getElementById('newProfileModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  saveNewProfile() {
+    const name = document.getElementById('newProfileName').value.trim();
+    if (!name) { this.showToast('Vui lòng nhập tên!', 'warning'); return; }
+    const copyFrom = document.getElementById('newProfileCopyFrom').value;
+    const colorEl = document.querySelector('input[name="newProfileColor"]:checked');
+    const newProfile = window.storageManager.createProfile({
+      studentName: name,
+      className: document.getElementById('newProfileClass').value.trim(),
+      schoolName: document.getElementById('newProfileSchool').value.trim(),
+      academicYear: document.getElementById('newProfileYear').value.trim(),
+      color: colorEl ? colorEl.value : '#3b82f6', showSunday: true,
+      avatarImage: this._pendingNewAvatar || null
+    }, copyFrom || null);
+    this._pendingNewAvatar = undefined;
+    this.closeNewProfileModal();
+    this.updateProfileUI();
+    this.renderCurrentTab();
+    this.showToast(`Đã tạo TKB cho ${newProfile.studentName}!`, 'success');
+  }
+
+  openManageProfilesModal() {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const container = document.getElementById('manageProfilesList');
+    if (!container) return;
+    const profiles = window.storageManager.getAllProfiles();
+    const activeId = window.storageManager.getActiveProfileId();
+    container.innerHTML = profiles.map(p => `
+      <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          ${this._renderAvatarHTML(p, 'w-10 h-10 text-sm')}
+          <div class="truncate">
+            <h5 class="font-bold text-slate-800 text-sm truncate">${p.studentName}</h5>
+            <p class="text-xs text-slate-500 truncate">${p.className} ${p.schoolName?'• '+p.schoolName:''}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          ${p.id===activeId ? '<span class="px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">Đang dùng</span>' : `<button onclick="window.app.switchProfile('${p.id}'); window.app.closeManageProfilesModal();" class="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-bold transition-colors cursor-pointer">Chọn</button>`}
+          ${profiles.length > 1 ? `<button onclick="window.app.deleteProfilePrompt('${p.id}', '${p.studentName}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+        </div>
+      </div>`).join('');
+    const modal = document.getElementById('manageProfilesModal');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  closeManageProfilesModal() {
+    const modal = document.getElementById('manageProfilesModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  deleteProfilePrompt(id, name) {
+    if (confirm(`Xóa TKB của "${name}"?`)) {
+      const res = window.storageManager.deleteProfile(id);
+      if (res.success) { this.updateProfileUI(); this.renderCurrentTab(); this.openManageProfilesModal(); this.showToast(res.message, 'info'); }
+      else this.showToast(res.message, 'warning');
+    }
+  }
+
+  deleteCurrentProfilePrompt() {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const profiles = window.storageManager.getAllProfiles();
+    if (profiles.length <= 1) { this.showToast('Phải có ít nhất 1 hồ sơ!', 'warning'); return; }
+    const active = window.storageManager.getActiveProfile();
+    if (confirm(`Xóa hồ sơ "${active.studentName}"? Hành động này không thể hoàn tác.`)) {
+      const res = window.storageManager.deleteProfile(active.id);
+      if (res.success) { this.updateProfileUI(); this.renderCurrentTab(); this.showToast(res.message, 'success'); }
+      else this.showToast(res.message, 'warning');
+    }
+  }
+
+  // --- TABS ---
+  switchTab(tabName) {
+    this.currentTab = tabName;
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.add('hidden'));
+    const activeSection = document.getElementById(`tab-${tabName}`);
+    if (activeSection) activeSection.classList.remove('hidden');
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+      if (btn.dataset.tab === tabName) {
+        btn.classList.add('text-blue-600');
+        btn.classList.remove('text-slate-600');
+        btn.style.borderBottomColor = '#2563eb';
+      }
+      else {
+        btn.classList.remove('text-blue-600');
+        btn.classList.add('text-slate-600');
+        btn.style.borderBottomColor = 'transparent';
+      }
+    });
+    this.renderCurrentTab();
+  }
+
+  renderCurrentTab() {
+    if (this.currentTab === 'timetable') window.timetableRenderer.render();
+    else if (this.currentTab === 'today') this.updateTodaySchedule();
+    else if (this.currentTab === 'homework') window.homeworkManager.render();
+    else if (this.currentTab === 'subjects') this.renderSubjectManagerList();
+    else if (this.currentTab === 'settings') this.loadProfileToUI();
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  // --- CLOCK & TODAY ---
+  startClockAndLiveStatus() {
+    this.updateClock();
+    this.updateTodaySchedule();
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.timerInterval = setInterval(() => { this.updateClock(); }, 1000);
+  }
+
+  updateClock() {
+    const now = new Date();
+    const timeEl = document.getElementById('liveClockTime');
+    const dateEl = document.getElementById('liveClockDate');
+    if (timeEl) timeEl.innerText = now.toLocaleTimeString('vi-VN', { hour12: false });
+    if (dateEl) {
+      const daysVN = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+      dateEl.innerText = `${daysVN[now.getDay()]}, ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+    }
+  }
+
+  getDayIdFromDate(date = new Date()) {
+    const d = date.getDay();
+    if (d === 0) return '8';
+    return String(d + 1);
+  }
+
+  timeToMin(t) {
+    if (!t) return 0;
+    const p = t.split(':');
+    return parseInt(p[0]) * 60 + parseInt(p[1]);
+  }
+
+  updateTodaySchedule() {
+    const todayId = this.getDayIdFromDate();
+    const daysMap = { '2':'Thứ Hai','3':'Thứ Ba','4':'Thứ Tư','5':'Thứ Năm','6':'Thứ Sáu','7':'Thứ Bảy','8':'Chủ Nhật' };
+    const container = document.getElementById('today-periods-list');
+    if (!container) return;
+
+    const schedule = window.storageManager.getSchedule();
+    const todayPeriods = [];
+
+    // Lấy tất cả môn học của hôm nay từ schedule (key = dayId_HHMM)
+    Object.keys(schedule).forEach(key => {
+      if (!key.startsWith(todayId + '_')) return;
+      const item = schedule[key];
+      if (!item || !item.name || !item.startTime || !item.endTime) return;
+      const startMin = this.timeToMin(item.startTime);
+      const session = startMin < 12*60 ? 'Sáng' : (startMin < 18*60 ? 'Chiều' : 'Tối');
+      todayPeriods.push({ time: { start: item.startTime, end: item.endTime }, session, ...item });
+    });
+    todayPeriods.sort((a, b) => this.timeToMin(a.time.start) - this.timeToMin(b.time.start));
+
+    const now = new Date();
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+    let currentPeriod = null;
+    todayPeriods.forEach(p => {
+      if (p.time && p.time.start && p.time.end) {
+        const [sH, sM] = p.time.start.split(':').map(Number);
+        const [eH, eM] = p.time.end.split(':').map(Number);
+        const startMin = sH * 60 + sM, endMin = eH * 60 + eM;
+        if (currentMin >= startMin && currentMin <= endMin) currentPeriod = { ...p, remainingMinutes: endMin - currentMin };
+      }
+    });
+
+    if (todayPeriods.length === 0) {
+      container.innerHTML = `
+        <div class="p-12 text-center bg-white rounded-3xl border border-slate-200 w-full">
+          <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-3"><i data-lucide="coffee" class="w-7 h-7"></i></div>
+          <h4 class="font-bold text-slate-800 text-lg mb-1">Hôm nay (${daysMap[todayId]}) không có lịch học</h4>
+          <p class="text-slate-500 text-sm">Chúc một ngày nghỉ ngơi vui vẻ!</p>
+        </div>`;
+    } else {
+      // --- Horizontal timeline ---
+      const PX_PER_MIN = 2.2; // 30min = 66px
+      const minStart = this.timeToMin(todayPeriods[0].time.start);
+      const minEnd = Math.max(...todayPeriods.map(p => this.timeToMin(p.time.end)));
+      // Round up to next 30-min boundary
+      const timelineStart = Math.floor(minStart / 30) * 30;
+      const timelineEnd = Math.ceil(minEnd / 30) * 30;
+      const totalMin = timelineEnd - timelineStart;
+      const totalWidth = totalMin * PX_PER_MIN;
+
+      // Build ruler ticks (every 30 min)
+      let rulerHTML = '';
+      for (let m = timelineStart; m <= timelineEnd; m += 30) {
+        const left = (m - timelineStart) * PX_PER_MIN;
+        const hh = String(Math.floor(m / 60)).padStart(2, '0');
+        const mm = String(m % 60).padStart(2, '0');
+        const isHour = (m % 60 === 0);
+        rulerHTML += `
+          <div class="absolute flex flex-col items-center" style="left:${left}px; top:0;">
+            <span class="text-[10px] font-bold ${isHour ? 'text-slate-700' : 'text-slate-400'}">${hh}:${mm}</span>
+            <div class="w-px ${isHour ? 'h-3 bg-slate-300' : 'h-2 bg-slate-200'} mt-0.5"></div>
+          </div>`;
+      }
+
+      // Build subject blocks
+      let blocksHTML = '';
+      todayPeriods.forEach((item, idx) => {
+        const subject = window.subjectManager.getById(item.subjectId);
+        const sMin = this.timeToMin(item.time.start);
+        const eMin = this.timeToMin(item.time.end);
+        const left = (sMin - timelineStart) * PX_PER_MIN;
+        const width = (eMin - sMin) * PX_PER_MIN;
+        const isCurrent = currentPeriod && currentPeriod.time && currentPeriod.time.start === item.time.start;
+        const sessionColor = item.session === 'Sáng' ? 'bg-amber-100 text-amber-800' : (item.session === 'Chiều' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800');
+        blocksHTML += `
+          <div class="absolute rounded-xl border-2 ${isCurrent ? 'today-subject-current' : 'border-slate-200'} bg-white shadow-xs overflow-hidden flex flex-col" style="left:${left}px; width:${width}px; top:0; height:100%;">
+            <div class="h-1.5 shrink-0" style="background-color:${subject.color};"></div>
+            <div class="flex-1 flex flex-col items-center justify-center px-1 py-1 text-center min-w-0">
+              <span class="text-[9px] font-bold ${sessionColor} px-1.5 rounded mb-0.5">${item.session}</span>
+              <h4 class="font-bold text-slate-800 text-xs leading-tight truncate w-full" title="${item.name}">${item.name}</h4>
+              <span class="text-[10px] text-slate-500 font-semibold mt-0.5">${item.time.start}</span>
+              ${item.room ? `<span class="text-[9px] text-slate-400 truncate w-full flex items-center justify-center gap-0.5"><i data-lucide="map-pin" class="w-2.5 h-2.5"></i>${item.room}</span>` : ''}
+              ${isCurrent ? `<span class="text-[9px] font-bold text-emerald-600 mt-0.5">● Đang học</span>` : ''}
+            </div>
+          </div>`;
+      });
+
+      // Now line
+      let nowLineHTML = '';
+      if (currentMin >= timelineStart && currentMin <= timelineEnd) {
+        const nowLeft = (currentMin - timelineStart) * PX_PER_MIN;
+        nowLineHTML = `
+          <div class="absolute today-now-line" style="left:${nowLeft}px; top:0; bottom:0; width:2px; z-index:20;">
+            <div class="absolute -top-0 -translate-x-1/2 w-3 h-3 bg-red-500 rounded-full border-2 border-white shadow-sm"></div>
+          </div>`;
+      }
+
+      container.innerHTML = `
+        <div class="relative" style="min-width:${totalWidth + 40}px;">
+          <!-- Ruler -->
+          <div class="relative h-8 mb-2" style="width:${totalWidth}px;">
+            ${rulerHTML}
+          </div>
+          <!-- Timeline track -->
+          <div class="relative today-timeline-ruler" style="width:${totalWidth}px; height:120px;">
+            ${blocksHTML}
+            ${nowLineHTML}
+          </div>
+        </div>`;
+    }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  // --- SUBJECTS ---
+  renderSubjectManagerList() {
+    const container = document.getElementById('subject-list-container');
+    if (!container) return;
+    const subjects = window.subjectManager.getAll();
+    container.innerHTML = subjects.map(s => `
+      <div class="p-3 bg-white rounded-2xl border border-slate-200 flex items-center justify-between shadow-2xs hover:border-slate-300 transition-all">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-2xs" style="background-color:${s.color};">${s.shortName||s.name.substring(0,2)}</div>
+          <div>
+            <h5 class="font-bold text-slate-800 text-sm">${s.name}</h5>
+            <span class="text-xs text-slate-400">${s.shortName}</span>
+          </div>
+        </div>
+        <button onclick="window.app.deleteSubjectPrompt('${s.id}')" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors cursor-pointer admin-only" style="display:none;">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>`).join('');
+    if (window.lucide) window.lucide.createIcons();
+    this.updateAdminUI();
+  }
+
+  openAddSubjectModal() {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    document.getElementById('newSubjectName').value = '';
+    document.getElementById('newSubjectShort').value = '';
+    const colorContainer = document.getElementById('newSubjectColorChips');
+    if (colorContainer) {
+      colorContainer.innerHTML = PRESET_COLORS.map((c, i) => `
+        <label class="cursor-pointer">
+          <input type="radio" name="newSubjectColor" value="${c}" class="hidden peer" ${i===0?'checked':''}>
+          <div class="w-7 h-7 rounded-full transition-transform peer-checked:scale-125 peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-blue-500" style="background-color:${c};"></div>
+        </label>`).join('');
+    }
+    const modal = document.getElementById('addSubjectModal');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+  }
+
+  closeAddSubjectModal() {
+    const modal = document.getElementById('addSubjectModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  saveNewSubject() {
+    const name = document.getElementById('newSubjectName').value.trim();
+    if (!name) { this.showToast('Vui lòng nhập tên môn!', 'warning'); return; }
+    const shortName = document.getElementById('newSubjectShort').value.trim();
+    const colorEl = document.querySelector('input[name="newSubjectColor"]:checked');
+    window.subjectManager.addSubject({ name, shortName, color: colorEl ? colorEl.value : '#3b82f6' });
+    this.closeAddSubjectModal();
+    this.renderSubjectManagerList();
+    this.showToast('Đã thêm môn học!', 'success');
+  }
+
+  deleteSubjectPrompt(id) {
+    if (confirm('Xóa môn học này?')) {
+      window.subjectManager.deleteSubject(id);
+      this.renderSubjectManagerList();
+      window.timetableRenderer.render();
+      this.showToast('Đã xóa môn học', 'info');
+    }
+  }
+
+  resetSubjectsPrompt() {
+    if (confirm('Khôi phục danh sách môn mặc định?')) {
+      window.subjectManager.resetDefaults();
+      this.renderSubjectManagerList();
+      window.timetableRenderer.render();
+      this.showToast('Đã khôi phục mặc định!', 'success');
+    }
+  }
+
+  // --- SETTINGS ---
+  loadProfileToUI() {
+    const profile = window.storageManager.getActiveProfile();
+    const el = (id) => document.getElementById(id);
+    if (el('inputStudentName')) el('inputStudentName').value = profile.studentName || '';
+    if (el('inputClassName')) el('inputClassName').value = profile.className || '';
+    if (el('inputSchoolName')) el('inputSchoolName').value = profile.schoolName || '';
+    if (el('inputAcademicYear')) el('inputAcademicYear').value = profile.academicYear || '';
+    if (el('checkShowSunday')) el('checkShowSunday').checked = profile.showSunday !== false;
+    // Avatar preview
+    this._updateAvatarPreview(profile);
+  }
+
+  /** Update avatar preview in settings form */
+  _updateAvatarPreview(profile) {
+    const preview = document.getElementById('avatarPreview');
+    const removeBtn = document.getElementById('avatarRemoveBtn');
+    if (!preview) return;
+    if (profile.avatarImage) {
+      preview.innerHTML = `<img src="${profile.avatarImage}" class="w-full h-full object-cover" alt="avatar">`;
+      preview.style.backgroundColor = 'transparent';
+      if (removeBtn) removeBtn.classList.remove('hidden');
+    } else {
+      const initial = (profile.avatar || (profile.studentName || 'A')[0] || '?').toUpperCase();
+      preview.innerHTML = initial;
+      preview.style.backgroundColor = profile.color || '#3b82f6';
+      if (removeBtn) removeBtn.classList.add('hidden');
+    }
+  }
+
+  /** Handle avatar file selection — resize to 128x128, convert to base64 */
+  handleAvatarUpload(file, previewId) {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { this.showToast('Vui lòng chọn file ảnh!', 'warning'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        // Resize to 128x128
+        const canvas = document.createElement('canvas');
+        canvas.width = 128; canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        // Cover crop
+        const scale = Math.max(128 / img.width, 128 / img.height);
+        const sw = img.width * scale, sh = img.height * scale;
+        const sx = (sw - 128) / 2, sy = (sh - 128) / 2;
+        ctx.drawImage(img, -sx, -sy, sw, sh);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        // Update preview
+        const preview = document.getElementById(previewId);
+        if (preview) {
+          preview.innerHTML = `<img src="${dataUrl}" class="w-full h-full object-cover" alt="avatar">`;
+          preview.style.backgroundColor = 'transparent';
+        }
+        // Store temporarily — will be saved with profile
+        if (previewId === 'avatarPreview') this._pendingAvatar = dataUrl;
+        else if (previewId === 'newProfileAvatarPreview') this._pendingNewAvatar = dataUrl;
+        const removeBtn = document.getElementById('avatarRemoveBtn');
+        if (removeBtn && previewId === 'avatarPreview') removeBtn.classList.remove('hidden');
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /** Remove avatar from settings preview */
+  removeAvatar() {
+    const profile = window.storageManager.getActiveProfile();
+    this._pendingAvatar = null;
+    profile.avatarImage = null;
+    window.storageManager.saveProfile(profile);
+    this._updateAvatarPreview(profile);
+    this.updateProfileUI();
+    this.showToast('Đã xóa ảnh đại diện!', 'info');
+  }
+
+  saveProfileFromUI() {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const profile = window.storageManager.getActiveProfile();
+    profile.studentName = document.getElementById('inputStudentName').value.trim();
+    profile.className = document.getElementById('inputClassName').value.trim();
+    profile.schoolName = document.getElementById('inputSchoolName').value.trim();
+    profile.academicYear = document.getElementById('inputAcademicYear').value.trim();
+    profile.showSunday = document.getElementById('checkShowSunday').checked;
+    profile.avatar = (profile.studentName || 'A')[0].toUpperCase();
+    // Save avatar if pending upload
+    if (this._pendingAvatar !== undefined) {
+      profile.avatarImage = this._pendingAvatar || null;
+      this._pendingAvatar = undefined;
+    }
+    window.storageManager.saveProfile(profile);
+    this.updateProfileUI();
+    window.timetableRenderer.render();
+    this.showToast('Đã cập nhật hồ sơ!', 'success');
+  }
+
+  // --- EXPORT / IMPORT ---
+
+  // Lấy timestamp dạng YYYY-MM-DD_HHMMSS
+  _backupTimestamp() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  }
+
+  // Lưu / đọc directory handle từ IndexedDB (để nhớ thư mục Backup)
+  async _saveDirHandle(handle) {
+    return new Promise((resolve) => {
+      const req = indexedDB.open('tkb_backup_db', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('handles'); };
+      req.onsuccess = () => {
+        const tx = req.result.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put(handle, 'backupDir');
+        tx.oncomplete = () => { req.result.close(); resolve(); };
+        tx.onerror = () => { req.result.close(); resolve(); };
+      };
+      req.onerror = () => resolve();
+    });
+  }
+  async _loadDirHandle() {
+    return new Promise((resolve) => {
+      const req = indexedDB.open('tkb_backup_db', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('handles'); };
+      req.onsuccess = () => {
+        try {
+          const tx = req.result.transaction('handles', 'readonly');
+          const getReq = tx.objectStore('handles').get('backupDir');
+          getReq.onsuccess = () => { req.result.close(); resolve(getReq.result || null); };
+          getReq.onerror = () => { req.result.close(); resolve(null); };
+        } catch { req.result.close(); resolve(null); }
+      };
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  async _verifyPermission(handle) {
+    try {
+      if ((await handle.queryPermission({ mode: 'readwrite' })) === 'granted') return true;
+      return (await handle.requestPermission({ mode: 'readwrite' })) === 'granted';
+    } catch { return false; }
+  }
+
+  async exportJSONFile() {
+    const jsonStr = window.storageManager.exportData();
+    const fileName = `TKB_Backup_${this._backupTimestamp()}.json`;
+
+    // Thử dùng File System Access API (Chrome/Edge)
+    if (window.showDirectoryPicker) {
+      try {
+        let dirHandle = await this._loadDirHandle();
+        if (!dirHandle || !(await this._verifyPermission(dirHandle))) {
+          // Lần đầu: yêu cầu user chọn thư mục Backup
+          this.showToast('Chọn thư mục Backup để lưu tự động...', 'info');
+          dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+          if (!dirHandle) { // User hủy
+            this._fallbackDownload(jsonStr, fileName);
+            return;
+          }
+          await this._saveDirHandle(dirHandle);
+        }
+        // Ghi file vào thư mục đã chọn
+        const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(jsonStr);
+        await writable.close();
+        this.showToast(`Đã sao lưu vào thư mục "${dirHandle.name}/${fileName}"`, 'success');
+        return;
+      } catch (err) {
+        console.warn('File System Access API failed, fallback to download:', err);
+        // Nếu user hủy picker (AbortError), không fallback
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback: tải file về thư mục Downloads
+    this._fallbackDownload(jsonStr, fileName);
+  }
+
+  _fallbackDownload(jsonStr, fileName) {
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.showToast('Đã tải file sao lưu (trình duyệt không hỗ trợ ghi trực tiếp)!', 'success');
+  }
+
+  // Đặt lại thư mục Backup (user muốn chọn lại)
+  async resetBackupFolder() {
+    return new Promise((resolve) => {
+      const req = indexedDB.open('tkb_backup_db', 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore('handles'); };
+      req.onsuccess = () => {
+        try {
+          const tx = req.result.transaction('handles', 'readwrite');
+          tx.objectStore('handles').delete('backupDir');
+          tx.oncomplete = () => { req.result.close(); this.showToast('Đã đặt lại thư mục Backup. Lần sau sao lưu sẽ yêu cầu chọn lại.', 'success'); resolve(); };
+          tx.onerror = () => { req.result.close(); resolve(); };
+        } catch { req.result.close(); resolve(); }
+      };
+      req.onerror = () => resolve();
+    });
+  }
+
+  // --- Export text (copy ra ngoài) ---
+  exportJSONText() {
+    const jsonStr = window.storageManager.exportData();
+    const ta = document.getElementById('exportTextArea');
+    if (ta) ta.value = jsonStr;
+    const modal = document.getElementById('exportTextModal');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  closeExportTextModal() {
+    const modal = document.getElementById('exportTextModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  copyExportText() {
+    const ta = document.getElementById('exportTextArea');
+    if (!ta) return;
+    ta.select();
+    ta.setSelectionRange(0, 999999);
+    try {
+      navigator.clipboard.writeText(ta.value).then(() => {
+        this.showToast('Đã copy! Dán vào VS Code và lưu thành backup.json', 'success');
+      }).catch(() => {
+        document.execCommand('copy');
+        this.showToast('Đã copy vào clipboard!', 'success');
+      });
+    } catch (e) {
+      document.execCommand('copy');
+      this.showToast('Đã copy vào clipboard!', 'success');
+    }
+  }
+
+  // --- Import text (dán từ ngoài vào) ---
+  openImportTextModal() {
+    const ta = document.getElementById('importTextArea');
+    if (ta) ta.value = '';
+    const modal = document.getElementById('importTextModal');
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  closeImportTextModal() {
+    const modal = document.getElementById('importTextModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  importJSONText() {
+    const ta = document.getElementById('importTextArea');
+    if (!ta || !ta.value.trim()) { this.showToast('Vui lòng dán dữ liệu JSON!', 'warning'); return; }
+    const res = window.storageManager.importData(ta.value.trim());
+    if (res.success) {
+      this.showToast('Nhập dữ liệu thành công!', 'success');
+      this.closeImportTextModal();
+      this.updateProfileUI(); this.renderCurrentTab(); this.renderSubjectManagerList(); this.updateTodaySchedule();
+    } else {
+      this.showToast(res.message, 'error');
+    }
+  }
+
+  exportImagePNG() {
+    const printArea = document.getElementById('timetable-print-area');
+    const profile = window.storageManager.getActiveProfile();
+    if (!printArea) return;
+    this.showToast('Đang tạo ảnh...', 'info');
+
+    // Clone vùng TKB thật để sửa style mà không đụng giao diện
+    const clone = printArea.cloneNode(true);
+    clone.id = 'tkb-export-clone';
+    clone.style.position = 'fixed';
+    clone.style.left = '-99999px';
+    clone.style.top = '0';
+    clone.style.width = printArea.scrollWidth + 'px';
+    clone.style.background = '#ffffff';
+    clone.style.padding = '24px';
+    clone.style.borderRadius = '0';
+    clone.style.boxShadow = 'none';
+    clone.style.border = 'none';
+
+    // Hiện header (tên HS, lớp, trường)
+    const cloneHeader = clone.querySelector('#print-profile-header');
+    if (cloneHeader) {
+      cloneHeader.classList.remove('hidden');
+      cloneHeader.style.display = 'block';
+    }
+
+    // Mở rộng scroll wrapper — bỏ max-height, overflow
+    const cloneWrapper = clone.querySelector('#timetable-scroll-wrapper');
+    if (cloneWrapper) {
+      cloneWrapper.style.maxHeight = 'none';
+      cloneWrapper.style.overflow = 'visible';
+      cloneWrapper.style.height = 'auto';
+      cloneWrapper.style.border = 'none';
+      cloneWrapper.style.boxShadow = 'none';
+      cloneWrapper.style.minHeight = 'auto';
+      // Bỏ class Tailwind gây giới hạn
+      cloneWrapper.className = cloneWrapper.className
+        .replace(/max-h-\[[^\]]+\]/g, '')
+        .replace(/overflow-auto/g, 'overflow-visible')
+        .replace(/min-h-\[[^\]]+\]/g, '')
+        .trim();
+    }
+
+    // Sửa toàn bộ element trong clone: sticky→static, overflow:hidden→visible, z-index
+    clone.querySelectorAll('*').forEach(el => {
+      const cs = el.style;
+      // position: sticky → static
+      if (cs.position === 'sticky') cs.position = 'static';
+      // overflow: hidden → visible (không cắt chữ)
+      if (cs.overflow === 'hidden') cs.overflow = 'visible';
+      // max-height → none
+      if (cs.maxHeight && cs.maxHeight !== 'none') cs.maxHeight = 'none';
+      // z-index: chỉ giữ z-index cho header row, còn lại = auto
+      if (cs.zIndex && cs.zIndex !== 'auto') {
+        const isHeader = el.classList && (el.classList.contains('timetable-header-row') || el.closest('.timetable-header-row'));
+        if (!isHeader) cs.zIndex = 'auto';
+      }
+    });
+
+    // Xóa border-bottom trên session-row → đường kẻ giữa các buổi không đè lên ô môn học
+    clone.querySelectorAll('.session-row').forEach(el => {
+      el.style.borderBottom = 'none';
+    });
+
+    // Bỏ class gây overflow:hidden qua Tailwind
+    clone.querySelectorAll('.lesson-cell-abs').forEach(el => {
+      el.style.overflow = 'visible';
+      // Tăng chiều cao ô để không bị cắt chữ
+      const curHeight = parseInt(el.style.height) || 0;
+      if (curHeight > 0 && curHeight < 40) el.style.height = '40px';
+    });
+
+    // Thêm clone vào DOM
+    document.body.appendChild(clone);
+
+    const cleanup = () => {
+      if (clone.parentNode) clone.parentNode.removeChild(clone);
+    };
+
+    if (window.html2canvas) {
+      setTimeout(() => {
+        // Đợi clone render xong
+        const fullHeight = clone.scrollHeight;
+        const fullWidth = clone.scrollWidth;
+        window.html2canvas(clone, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          width: fullWidth,
+          height: fullHeight,
+          windowWidth: fullWidth,
+          windowHeight: fullHeight,
+          scrollX: 0,
+          scrollY: 0
+        }).then(canvas => {
+          cleanup();
+          const link = document.createElement('a');
+          const cleanName = (profile.studentName || 'HocSinh').replace(/\s+/g, '_');
+          link.download = 'TKB_' + cleanName + '_' + new Date().toISOString().split('T')[0] + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          this.showToast('Xuất ảnh thành công!', 'success');
+        }).catch(err => {
+          cleanup();
+          console.error(err);
+          this.showToast('Lỗi: ' + err.message, 'error');
+        });
+      }, 500);
+    } else {
+      cleanup();
+      window.print();
+    }
+  }
+
+    printTimetable() { window.print(); }
+
+  clearAllSchedulePrompt() {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const profile = window.storageManager.getActiveProfile();
+    if (confirm(`Làm trống TKB của "${profile.studentName}"?`)) {
+      window.storageManager.clearSchedule(profile.id);
+      window.storageManager.saveHomework([], profile.id);
+      this.updateProfileUI();
+      window.timetableRenderer.render();
+      window.homeworkManager.render();
+      this.updateTodaySchedule();
+      this.showToast('Đã làm trống!', 'success');
+    }
+  }
+
+  resetData() {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    if (confirm('Khôi phục toàn bộ dữ liệu về mặc định? Mọi thay đổi sẽ mất!')) {
+      window.storageManager.resetAllData();
+      this.updateProfileUI();
+      this.renderCurrentTab();
+      this.renderSubjectManagerList();
+      this.showToast('Đã khôi phục mặc định!', 'success');
+    }
+  }
+
+  // --- TOAST ---
+  showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const icons = {
+      success: '<i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>',
+      warning: '<i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>',
+      error: '<i data-lucide="x-circle" class="w-5 h-5 text-red-500"></i>',
+      info: '<i data-lucide="info" class="w-5 h-5 text-blue-500"></i>'
+    };
+    const toast = document.createElement('div');
+    toast.className = 'toast-slide-in p-4 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center gap-3 text-sm font-semibold text-slate-800 min-w-[280px] max-w-sm pointer-events-auto';
+    toast.innerHTML = `${icons[type]||icons.info}<span class="flex-1">${message}</span>`;
+    container.appendChild(toast);
+    if (window.lucide) window.lucide.createIcons();
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(10px)'; toast.style.transition = 'all 0.3s ease'; setTimeout(() => toast.remove(), 300); }, 3000);
+  }
+
+  // ---------- OCR PREVIEW MODAL HANDLERS ----------
+  openOCRPreviewModal(entries, imageURL) {
+    this.ocrPreviewEntries = entries || [];
+    window.appLogger && window.appLogger.info('openOCRPreviewModal', `Entries: ${this.ocrPreviewEntries.length}, hasImage: ${!!imageURL}`);
+    const modal = document.getElementById('ocrPreviewModal');
+    const img = document.getElementById('ocrPreviewImage');
+    if (img) img.src = imageURL || '';
+    this._renderOCRTable();
+    if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  _renderOCRTable() {
+    const tbody = document.getElementById('ocrPreviewTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const subjects = window.subjectManager ? window.subjectManager.getAll() : [];
+    const daysList = [
+      {id:'2',name:'Thứ 2'},{id:'3',name:'Thứ 3'},{id:'4',name:'Thứ 4'},
+      {id:'5',name:'Thứ 5'},{id:'6',name:'Thứ 6'},{id:'7',name:'Thứ 7'},{id:'8',name:'CN'}
+    ];
+
+    this.ocrPreviewEntries.forEach((e, idx) => {
+      const tr = document.createElement('tr');
+      const dayOptions = daysList.map(d => `<option value="${d.id}" ${e.dayId===d.id?'selected':''}>${d.name}</option>`).join('');
+      const subjectOptions = subjects.map(s => `<option value="${s.id}" ${e.subjectId===s.id?'selected':''}>${s.name}</option>`).join('');
+
+      tr.innerHTML = `
+        <td class="border p-1"><select data-idx="${idx}" data-field="dayId" class="w-full border rounded px-1 py-0.5 text-xs">${dayOptions}</select></td>
+        <td class="border p-1"><input type="time" value="${e.startTime || ''}" data-idx="${idx}" data-field="startTime" class="w-full border rounded px-1 py-0.5 text-xs"/></td>
+        <td class="border p-1"><input type="time" value="${e.endTime || ''}" data-idx="${idx}" data-field="endTime" class="w-full border rounded px-1 py-0.5 text-xs"/></td>
+        <td class="border p-1">
+          <select data-idx="${idx}" data-field="subjectId" class="w-full border rounded px-1 py-0.5 text-xs">
+            <option value="">-- Môn --</option>
+            ${subjectOptions}
+          </select>
+          <input type="text" value="${e.name || ''}" data-idx="${idx}" data-field="name" placeholder="Tên môn" class="w-full border rounded px-1 py-0.5 text-xs mt-1"/>
+        </td>
+        <td class="border p-1"><input type="text" value="${e.teacher || ''}" data-idx="${idx}" data-field="teacher" class="w-full border rounded px-1 py-0.5 text-xs"/></td>
+        <td class="border p-1"><input type="text" value="${e.room || ''}" data-idx="${idx}" data-field="room" class="w-full border rounded px-1 py-0.5 text-xs"/></td>
+        <td class="border p-1"><input type="text" value="${e.note || ''}" data-idx="${idx}" data-field="note" class="w-full border rounded px-1 py-0.5 text-xs"/></td>
+        <td class="border p-1"><button onclick="window.app.deleteOCREntry(${idx})" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 cursor-pointer">Xóa</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('input, select').forEach(inp => {
+      inp.addEventListener('change', (ev) => {
+        const idx = parseInt(ev.target.dataset.idx, 10);
+        const field = ev.target.dataset.field;
+        if (!isNaN(idx) && field && this.ocrPreviewEntries[idx]) {
+          this.ocrPreviewEntries[idx][field] = ev.target.value;
+          if (field === 'subjectId' && ev.target.value) {
+            const subj = window.subjectManager.getById(ev.target.value);
+            if (subj) this.ocrPreviewEntries[idx].name = subj.name;
+          }
+        }
+      });
+    });
+  }
+
+  closeOCRPreviewModal() {
+    const modal = document.getElementById('ocrPreviewModal');
+    if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+  }
+
+  deleteOCREntry(index) {
+    if (index >= 0 && index < this.ocrPreviewEntries.length) {
+      this.ocrPreviewEntries.splice(index, 1);
+      this._renderOCRTable();
+    }
+  }
+
+  addOCREntry() {
+    this.ocrPreviewEntries.push({
+      dayId: '2', startTime: '07:00', endTime: '07:45',
+      subjectId: null, name: '', teacher: '', room: '', note: ''
+    });
+    this._renderOCRTable();
+  }
+
+  /**
+   * Apply OCR data to schedule.
+   * @param {string} mode 'merge' to merge, 'replace' to clear and set.
+   */
+  applyOCRData(mode) {
+    if (!this.isAdmin) { this.showToast('Cần đăng nhập Admin!', 'warning'); return; }
+    const profile = window.storageManager.getActiveProfile();
+    if (!profile) { window.appLogger && window.appLogger.error('applyOCRData: No active profile'); return; }
+
+    window.appLogger && window.appLogger.info('applyOCRData started', `Mode: ${mode}, Entries: ${this.ocrPreviewEntries.length}, Profile: ${profile.id}`);
+
+    if (mode === 'replace') {
+      if (!confirm('Thay thế toàn bộ thời khóa biểu hiện tại?')) return;
+      window.storageManager.clearSchedule(profile.id);
+      window.appLogger && window.appLogger.info('Schedule cleared (replace mode)');
+    }
+
+    // Auto-create subjects for entries with subjectId === null
+    const createdSubjects = {};
+    this.ocrPreviewEntries.forEach(entry => {
+      if (!entry.subjectId && entry.name) {
+        const cacheKey = entry.name.toLowerCase().trim();
+        if (createdSubjects[cacheKey]) {
+          entry.subjectId = createdSubjects[cacheKey];
+        } else {
+          const existing = window.subjectManager.getAll().find(s =>
+            s.name.toLowerCase() === entry.name.toLowerCase()
+          );
+          if (existing) {
+            entry.subjectId = existing.id;
+            createdSubjects[cacheKey] = existing.id;
+          } else {
+            const colorIdx = window.subjectManager.getAll().length % PRESET_COLORS.length;
+            const newSubj = window.subjectManager.addSubject({
+              name: entry.name, shortName: entry.name.substring(0, 4),
+              color: PRESET_COLORS[colorIdx]
+            });
+            entry.subjectId = newSubj.id;
+            createdSubjects[cacheKey] = newSubj.id;
+            window.appLogger && window.appLogger.info('Auto-created subject', `${entry.name} → id=${newSubj.id}`);
+          }
+        }
+      }
+    });
+
+    if (Object.keys(createdSubjects).length > 0) {
+      this.renderSubjectManagerList();
+      window.appLogger && window.appLogger.info('Subjects auto-created', `Count: ${Object.keys(createdSubjects).length}`);
+    }
+
+    const schedule = {};
+    this.ocrPreviewEntries.forEach(entry => {
+      if (!entry.dayId || !entry.startTime) return;
+      const timeKey = entry.startTime.replace(':', '');
+      const key = `${entry.dayId}_${timeKey}`;
+      const { dayId, ...data } = entry;
+      schedule[key] = data;
+    });
+    window.storageManager.mergeSchedule(profile.id, schedule);
+    window.appLogger && window.appLogger.info('Schedule merged', `Keys: ${Object.keys(schedule).length}`);
+    this.closeOCRPreviewModal();
+    this.showToast(`Đã cập nhật lịch từ OCR (${Object.keys(schedule).length} mục)`, 'success');
+    window.timetableRenderer.render();
+    this.updateTodaySchedule();
+  }
+}
+
+window.app = new App();
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => window.app.init());
+else window.app.init();
+
+  </script>
 </body>
 </html>
