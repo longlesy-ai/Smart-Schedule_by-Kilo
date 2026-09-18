@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thời Khóa Biểu Thông Minh - THCS Võ Cường</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { brand: { 50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb',700:'#1d4ed8' } } } }
+    }
+  </script>
+
+  <!-- Google Fonts: Be Vietnam Pro & Fredoka -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=Fredoka:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <!-- Tesseract.js (OCR) -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col antialiased">
+
+  <!-- ===== HEADER ===== -->
+  <header class="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-b border-slate-200 sticky top-0 z-40 shadow-lg">
+    <div class="w-full px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between py-3 gap-3">
+        <div class="w-32"></div>
+
+        <!-- Title (Center) -->
+        <div class="flex-1 flex items-center justify-center">
+          <div class="flex gap-3" style="font-family: 'Fredoka', sans-serif; perspective: 1000px;">
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #3b82f6;">S</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #ef4444;">M</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #10b981;">A</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #f59e0b;">R</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #8b5cf6;">T</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #ec4899;">S</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #3b82f6;">C</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #10b981;">H</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #f59e0b;">E</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #8b5cf6;">D</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #06b6d4;">U</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #ef4444;">L</span>
+            <span class="title-letter text-6xl font-black tracking-tight" style="color: #10b981;">E</span>
+          </div>
+        </div>
+
+        <!-- Clock & Admin (Right) -->
+        <div class="flex flex-col items-end gap-2 shrink-0">
+          <div class="hidden lg:flex flex-col items-end text-right">
+            <span id="liveClockTime" class="text-sm font-bold text-slate-900 tracking-wide">13:50:41</span>
+            <span id="liveClockDate" class="text-xs text-slate-500 font-medium">Thu Tư, 16/9/2026</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span id="connectionStatus" class="text-[10px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-700">Offline</span>
+            <button id="adminBtn" onclick="window.app.toggleAdminLogin()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer">
+              <i data-lucide="lock" class="w-3.5 h-3.5"></i><span class="hidden sm:inline" id="adminBtnText">Admin</span>
+            </button>
+            <button onclick="window.appLogger.downloadLogs()" class="admin-only flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer" style="display:none;" title="Tải file log (Ctrl+Shift+L)">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i><span class="hidden sm:inline">Log</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== NAV TABS ===== -->
+  <nav class="bg-gradient-to-r from-slate-50 via-blue-50 to-slate-50 border-b border-slate-200 sticky z-30 shadow-md">
+    <div class="w-full px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between gap-3 py-3 overflow-x-auto no-scrollbar">
+        <div class="flex space-x-1 sm:space-x-2 overflow-x-auto no-scrollbar border-b border-slate-200">
+          <button data-tab="timetable" class="nav-tab-btn flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold transition-all text-blue-600 border-b-2 border-blue-600">
+            <span>Thời Khóa Biểu Tuần</span>
+          </button>
+          <button data-tab="today" class="nav-tab-btn flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-800 border-b-2 border-transparent hover:border-slate-300">
+            <span>Hôm Nay Học Gì?</span>
+          </button>
+          <button data-tab="homework" class="nav-tab-btn flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-800 border-b-2 border-transparent hover:border-slate-300 relative">
+            <span>Bài Tập Về Nhà</span>
+            <span id="homework-badge" class="hidden absolute -top-1 -right-1 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-black rounded-full shadow-sm">0</span>
+          </button>
+          <button data-tab="subjects" class="nav-tab-btn flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-800 border-b-2 border-transparent hover:border-slate-300">
+            <span>Môn Học</span>
+          </button>
+          <button data-tab="settings" class="nav-tab-btn flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold transition-all text-slate-600 hover:text-slate-800 border-b-2 border-transparent hover:border-slate-300">
+            <span>Cài Đặt</span>
+          </button>
+        </div>
+        <!-- Action buttons on the right -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button onclick="window.app.exportImagePNG()" class="btn-action flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer shadow-2xs">
+            <i data-lucide="camera" class="w-4 h-4 text-blue-600"></i><span class="hidden sm:inline">Xuất ảnh</span>
+          </button>
+          <button onclick="window.app.printTimetable()" class="btn-action flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-all cursor-pointer shadow-2xs">
+            <i data-lucide="printer" class="w-4 h-4"></i><span class="hidden sm:inline">In A4</span>
+          </button>
+          <button onclick="window.app.exportJSONFile()" class="btn-action flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold transition-all cursor-pointer shadow-2xs">
+            <i data-lucide="download" class="w-4 h-4"></i><span class="hidden sm:inline">Sao lưu</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== MAIN ===== -->
+  <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-5">
+
+    <!-- TAB: TIMETABLE -->
+    <section id="tab-timetable" class="tab-content w-full space-y-3">
+      <!-- Profile Section -->
+      <div class="flex items-center gap-2">
+        <div id="profile-pills-container" class="flex items-center gap-2"></div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="window.app.openNewProfileModal()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Thêm người">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+          </button>
+          <button onclick="window.app.clearAllSchedulePrompt()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Làm trống">
+            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Timetable -->
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 p-6" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%); box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6); border: 1px solid rgba(255, 255, 255, 0.4);">
+        <div id="timetable-print-area" class="w-full">
+          <div id="print-profile-header" class="hidden"></div>
+          <div id="timetable-container" class="w-full">
+            <div class="text-center py-12 text-slate-400">Đang tải...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: TODAY -->
+    <section id="tab-today" class="tab-content hidden w-full space-y-3">
+      <!-- Profile Section -->
+      <div class="flex items-center gap-2">
+        <div id="profile-pills-container-today" class="flex items-center gap-2"></div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="window.app.openNewProfileModal()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Thêm người">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+          </button>
+          <button onclick="window.app.clearAllSchedulePrompt()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Làm trống">
+            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center justify-end bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+        <strong id="today-student-tag" class="text-blue-600 text-xs hidden">...</strong>
+      </div>
+      <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm w-full">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i data-lucide="calendar-clock" class="w-5 h-5 text-blue-600"></i> Lịch Học Trong Ngày</h3>
+        </div>
+        <div id="today-periods-list" class="overflow-x-auto"><div class="text-center py-8 text-slate-400">Đang kiểm tra...</div></div>
+      </div>
+    </section>
+
+    <!-- TAB: HOMEWORK -->
+    <section id="tab-homework" class="tab-content hidden w-full space-y-3">
+      <!-- Profile Section -->
+      <div class="flex items-center gap-2">
+        <div id="profile-pills-container-homework" class="flex items-center gap-2"></div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="window.app.openNewProfileModal()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Thêm người">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+          </button>
+          <button onclick="window.app.clearAllSchedulePrompt()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Làm trống">
+            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+        <span id="homework-student-name" class="text-xs text-slate-500 hidden">Đang tải...</span>
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
+            <button data-filter="all" onclick="window.homeworkManager.setFilter('all')" class="hw-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-blue-600 text-white shadow-xs">Tất cả</button>
+            <button data-filter="pending" onclick="window.homeworkManager.setFilter('pending')" class="hw-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-transparent text-slate-600 hover:bg-white">Chưa làm</button>
+            <button data-filter="completed" onclick="window.homeworkManager.setFilter('completed')" class="hw-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-transparent text-slate-600 hover:bg-white">Đã xong</button>
+          </div>
+          <button onclick="window.homeworkManager.openAddModal()" class="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer admin-only" style="display:none;">
+            <i data-lucide="plus" class="w-4 h-4"></i><span>Thêm Bài Tập</span>
+          </button>
+        </div>
+      </div>
+      <div id="homework-list" class="w-full"></div>
+    </section>
+
+    <!-- TAB: SUBJECTS -->
+    <section id="tab-subjects" class="tab-content hidden w-full space-y-3">
+      <!-- Profile Section -->
+      <div class="flex items-center gap-2">
+        <div id="profile-pills-container-subjects" class="flex items-center gap-2"></div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="window.app.openNewProfileModal()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Thêm người">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+          </button>
+          <button onclick="window.app.clearAllSchedulePrompt()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Làm trống">
+            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 bg-white p-4 rounded-3xl border border-slate-200 shadow-xs">
+        <div class="flex items-center gap-2">
+          <button onclick="window.app.resetSubjectsPrompt()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer admin-only" style="display:none;">Khôi phục mặc định</button>
+          <button onclick="window.app.openAddSubjectModal()" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-xs hover:bg-blue-700 transition-all cursor-pointer admin-only" style="display:none;">
+            <i data-lucide="plus" class="w-4 h-4"></i> Thêm Môn
+          </button>
+        </div>
+      </div>
+      <div id="subject-list-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3.5 w-full"></div>
+    </section>
+
+    <!-- TAB: SETTINGS -->
+    <section id="tab-settings" class="tab-content hidden w-full space-y-3">
+      <!-- Profile Section -->
+      <div class="flex items-center gap-2">
+        <div id="profile-pills-container-settings" class="flex items-center gap-2"></div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="window.app.openNewProfileModal()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Thêm người">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+          </button>
+          <button onclick="window.app.clearAllSchedulePrompt()" class="p-1.5 rounded-lg bg-slate-600 hover:bg-slate-700 text-white transition-all cursor-pointer admin-only" style="display:none;" title="Làm trống">
+            <i data-lucide="eraser" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+            <div class="p-2 rounded-xl bg-indigo-50 text-indigo-600"><i data-lucide="user-check" class="w-5 h-5"></i></div>
+            <h3 class="font-bold text-slate-800 text-base">Thông Tin Học Sinh</h3>
+          </div>
+          <form id="profileForm" class="space-y-3">
+            <!-- Avatar upload -->
+            <div class="flex items-center gap-4">
+              <div class="relative shrink-0">
+                <div id="avatarPreview" class="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-xs overflow-hidden" style="background-color:#3b82f6;">M</div>
+                <label for="avatarFileInput" class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-sm" title="Đổi ảnh">
+                  <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                </label>
+                <input type="file" id="avatarFileInput" accept="image/*" class="hidden">
+              </div>
+              <div class="flex-1">
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Ảnh đại diện</label>
+                <p class="text-xs text-slate-400">Bấm vào biểu tượng máy ảnh để tải ảnh lên</p>
+                <button type="button" id="avatarRemoveBtn" class="text-xs text-red-500 hover:text-red-700 font-semibold mt-1 hidden cursor-pointer">Xóa ảnh</button>
+              </div>
+            </div>
+            <div><label class="block text-xs font-semibold text-slate-600 mb-1">Họ và tên</label><input type="text" id="inputStudentName" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+            <div><label class="block text-xs font-semibold text-slate-600 mb-1">Lớp học</label><input type="text" id="inputClassName" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+            <div><label class="block text-xs font-semibold text-slate-600 mb-1">Trường học</label><input type="text" id="inputSchoolName" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+            <div><label class="block text-xs font-semibold text-slate-600 mb-1">Năm học</label><input type="text" id="inputAcademicYear" class="w-full text-sm p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+            <div><label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="checkShowSunday" class="w-4 h-4 text-blue-600 rounded"><span class="text-xs font-semibold text-slate-700">Hiển thị cột Chủ Nhật</span></label></div>
+            <div class="flex gap-2 pt-2 admin-only" style="display:none;">
+              <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 transition-colors shadow-xs cursor-pointer">Lưu Thông Tin</button>
+              <button type="button" onclick="window.app.deleteCurrentProfilePrompt()" class="flex-1 py-2.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 transition-colors shadow-xs cursor-pointer">Xóa hồ sơ</button>
+            </div>
+          </form>
+        </div>
+        <div class="space-y-6">
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div class="p-2 rounded-xl bg-orange-50 text-orange-600"><i data-lucide="image" class="w-5 h-5"></i></div>
+              <h3 class="font-bold text-slate-800 text-base">Nhập từ ảnh TKB</h3>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Tải ảnh thời khóa biểu, hệ thống sẽ tự động đọc thông tin và cập nhật.</p>
+            <!-- Drop Zone -->
+            <div id="ocrDropZone" class="border-2 border-dashed border-orange-300 hover:border-orange-500 rounded-2xl p-5 text-center cursor-pointer transition-colors bg-orange-50/50 admin-only" style="display:none;">
+              <input type="file" id="importImageInput" accept="image/*" class="hidden">
+              <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              </div>
+              <p class="text-xs font-bold text-orange-600">Kéo thả ảnh vào đây</p>
+              <p class="text-[10px] text-slate-400 mt-1">hoặc click để chọn file</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="window.app.pasteImageFromClipboard()" class="flex-1 py-2.5 px-4 rounded-xl border-2 border-dashed border-orange-300 hover:border-orange-500 bg-orange-50 text-orange-600 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer admin-only" style="display:none;">
+                <i data-lucide="clipboard" class="w-4 h-4"></i><span>Dán ảnh</span>
+              </button>
+            </div>
+            <!-- Image Preview -->
+            <div id="ocrImagePreviewContainer" class="hidden text-center">
+              <img id="ocrImagePreview" alt="Ảnh TKB xem trước" class="max-h-40 mx-auto rounded-xl border border-slate-200 shadow-xs object-contain">
+            </div>
+            <!-- Progress Bar -->
+            <div id="ocrProgressContainer" class="hidden space-y-2 p-3 bg-orange-50/60 rounded-xl border border-orange-100">
+              <div class="flex justify-between text-xs font-semibold text-orange-900">
+                <span id="ocrProgressStatus">Đang quét nhận diện chữ...</span>
+              </div>
+              <div class="w-full bg-orange-200 rounded-full h-2 overflow-hidden">
+                <div id="ocrProgressBar" class="bg-orange-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+            <!-- Legacy status (kept hidden, replaced by progress bar) -->
+            <div id="imageOcrStatus" class="hidden text-xs text-slate-500">
+              <div class="flex items-center gap-2"><div class="animate-spin"><i data-lucide="loader" class="w-4 h-4"></i></div><span>Đang đọc ảnh...</span></div>
+            </div>
+          </div>
+
+          <!-- Upload Excel TKB -->
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div class="p-2 rounded-xl bg-green-50 text-green-600"><i data-lucide="file-spreadsheet" class="w-5 h-5"></i></div>
+              <h3 class="font-bold text-slate-800 text-base">Nhập từ file Excel</h3>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Tải file Excel thời khóa biểu (.xlsx, .xls), hệ thống sẽ tự động đọc dữ liệu. Nhanh và chính xác hơn OCR ảnh.</p>
+            <!-- Excel Drop Zone -->
+            <div id="excelDropZone" class="border-2 border-dashed border-green-300 hover:border-green-500 rounded-2xl p-5 text-center cursor-pointer transition-colors bg-green-50/50 admin-only" style="display:none;">
+              <input type="file" id="importExcelInput" accept=".xlsx,.xls,.csv" class="hidden">
+              <div class="w-10 h-10 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+              </div>
+              <p class="text-xs font-bold text-green-600">Kéo thả file Excel vào đây</p>
+              <p class="text-[10px] text-slate-400 mt-1">hoặc click để chọn file (.xlsx, .xls, .csv)</p>
+            </div>
+            <div id="excelProgressContainer" class="hidden space-y-2 p-3 bg-green-50/60 rounded-xl border border-green-100">
+              <div class="flex justify-between text-xs font-semibold text-green-900">
+                <span id="excelProgressStatus">Đang đọc file Excel...</span>
+              </div>
+              <div class="w-full bg-green-200 rounded-full h-2 overflow-hidden">
+                <div id="excelProgressBar" class="bg-green-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cloud Realtime Sync Card -->
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-3">
+                <div class="p-2 rounded-xl bg-sky-50 text-sky-600"><i data-lucide="cloud" class="w-5 h-5"></i></div>
+                <div>
+                  <h3 class="font-bold text-slate-800 text-base">Đồng Bộ Đám Mây (Firebase)</h3>
+                  <p class="text-[11px] text-slate-400">Xem trên mạng, Admin sửa thì mọi máy tự cập nhật ngay</p>
+                </div>
+              </div>
+              <span id="cloudStatusBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">Chưa kết nối</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">
+              Khi kết nối Firebase Firestore, toàn bộ thời khóa biểu sẽ tự động đồng bộ thời gian thực. Bất cứ khi nào Admin cập nhật lịch học, học sinh và phụ huynh xem trên điện thoại hoặc máy tính đều nhận được dữ liệu mới tức thì mà không cần tải lại trang.
+            </p>
+            <div class="space-y-2 pt-1">
+              <button onclick="window.app.openFirebaseModal()" class="w-full py-2.5 px-4 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer admin-only" style="display:none;">
+                <i data-lucide="settings-2" class="w-4 h-4"></i> Cấu hình tài khoản Firebase
+              </button>
+              <button onclick="window.app.syncAllToFirebaseNow()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer admin-only" style="display:none;">
+                <i data-lucide="cloud-upload" class="w-4 h-4"></i> Tải dữ liệu hiện tại lên đám mây
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div class="p-2 rounded-xl bg-emerald-50 text-emerald-600"><i data-lucide="database" class="w-5 h-5"></i></div>
+              <h3 class="font-bold text-slate-800 text-base">Sao Lưu & Phục Hồi</h3>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed">Dữ liệu được đồng bộ qua Firebase (nếu đã cấu hình) hoặc lưu trong trình duyệt. Bấm "Sao lưu" để tự động lưu vào thư mục Backup (chọn thư mục lần đầu).</p>
+            <div class="space-y-2 pt-2">
+              <button onclick="window.app.exportJSONFile()" class="w-full py-2.5 px-4 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                <i data-lucide="download" class="w-4 h-4"></i> Sao lưu vào thư mục Backup
+              </button>
+              <button onclick="window.app.resetBackupFolder()" class="w-full py-2 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                <i data-lucide="folder-sync" class="w-3.5 h-3.5"></i> Đặt lại thư mục Backup
+              </button>
+              <button onclick="window.app.exportJSONText()" class="w-full py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                <i data-lucide="copy" class="w-4 h-4 text-blue-600"></i> Sao chép dữ liệu (dạng text)
+              </button>
+              <label class="w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-500 text-slate-600 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                <i data-lucide="upload" class="w-4 h-4 text-blue-600"></i><span>Nhập dữ liệu từ file</span>
+                <input type="file" id="importFileInput" accept=".json" class="hidden">
+              </label>
+              <button onclick="window.app.openImportTextModal()" class="w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-500 text-slate-600 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer">
+                <i data-lucide="clipboard-paste" class="w-4 h-4 text-blue-600"></i><span>Dán dữ liệu từ text</span>
+              </button>
+              <button onclick="window.app.resetData()" class="w-full py-2.5 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer admin-only" style="display:none;">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Khôi phục mặc định
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== ADMIN LOGIN MODAL ===== -->
+  <div id="adminLoginModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-black text-slate-800 text-lg flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-indigo-600"></i> Đăng nhập Admin</h3>
+        <button onclick="window.app.closeAdminLogin()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input type="password" id="adminPasswordInput" placeholder="Mật khẩu" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm" onkeydown="if(event.key==='Enter') window.app.adminLogin()">
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="window.app.closeAdminLogin()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+        <button onclick="window.app.adminLogin()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer">Đăng nhập</button>
+      </div>
+      <p class="text-[11px] text-slate-400 text-center">Mật khẩu mặc định: <code class="bg-slate-100 px-1.5 py-0.5 rounded font-mono">admin123</code></p>
+    </div>
+  </div>
+
+  <!-- ===== EDIT LESSON MODAL ===== -->
+  <div id="periodModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div><span class="text-[11px] font-bold uppercase tracking-wider text-blue-600">Cài đặt môn học</span><h3 id="periodModalTitle" class="font-black text-slate-800 text-lg">Môn học</h3></div>
+        <button onclick="window.timetableRenderer.closeEditModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-sm">
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Môn học *</label><select id="modalSubjectSelect" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium"></select></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Thời gian *</label>
+          <div class="flex items-center gap-2"><input type="time" id="modalStartTime" class="flex-1 p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs font-bold text-slate-700 bg-white"><span class="text-xs text-slate-400 font-bold">-</span><input type="time" id="modalEndTime" class="flex-1 p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs font-bold text-slate-700 bg-white"></div>
+        </div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Giáo viên</label><input type="text" id="modalTeacher" placeholder="Tên giáo viên..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Phòng / Địa điểm</label><input type="text" id="modalRoom" placeholder="Phòng học..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Ghi chú</label><input type="text" id="modalNote" placeholder="VD: Học thêm, Kiểm tra..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div class="admin-only" style="display:none;">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Màu nền ô (tùy chọn)</label>
+          <div class="flex items-center gap-3 p-2.5 rounded-xl border border-slate-200">
+            <input type="checkbox" id="modalCellColorTransparent" checked class="w-4 h-4 accent-blue-600 cursor-pointer">
+            <label for="modalCellColorTransparent" class="text-xs text-slate-500 cursor-pointer">Trong suốt</label>
+            <input type="color" id="modalCellColor" value="#ffffff" class="w-8 h-8 rounded-lg border border-slate-200 cursor-pointer ml-auto">
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+        <button id="modalDeleteBtn" onclick="window.timetableRenderer.deleteModalData()" class="px-4 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer">Xóa ô này</button>
+        <div class="flex items-center gap-2">
+          <button onclick="window.timetableRenderer.closeEditModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+          <button onclick="window.timetableRenderer.saveModalData()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer">Lưu lại</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== NEW PROFILE MODAL ===== -->
+  <div id="newProfileModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div><span class="text-[11px] font-bold uppercase tracking-wider text-blue-600">Thêm người mới</span><h3 class="font-black text-slate-800 text-lg">Tạo Thời Khóa Biểu Mới</h3></div>
+        <button onclick="window.app.closeNewProfileModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-sm">
+        <!-- Avatar upload -->
+        <div class="flex items-center gap-4">
+          <div class="relative shrink-0">
+            <div id="newProfileAvatarPreview" class="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-xs overflow-hidden" style="background-color:#3b82f6;">?</div>
+            <label for="newProfileAvatarFile" class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-sm" title="Tải ảnh">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+            </label>
+            <input type="file" id="newProfileAvatarFile" accept="image/*" class="hidden">
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Ảnh đại diện (tùy chọn)</label>
+            <p class="text-xs text-slate-400">Bấm vào máy ảnh để tải ảnh lên</p>
+          </div>
+        </div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Tên học sinh *</label><input type="text" id="newProfileName" placeholder="Nhập tên..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Lớp</label><input type="text" id="newProfileClass" placeholder="VD: Lớp 8A2.3" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Trường</label><input type="text" id="newProfileSchool" value="THCS Võ Cường" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Năm học</label><input type="text" id="newProfileYear" value="2026 - 2027" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Sao chép từ?</label><select id="newProfileCopyFrom" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none text-xs"></select></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-2">Màu đại diện</label><div id="newProfileColorChips" class="flex items-center gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200"></div></div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+        <button onclick="window.app.closeNewProfileModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+        <button onclick="window.app.saveNewProfile()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer">Tạo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MANAGE PROFILES MODAL ===== -->
+  <div id="manageProfilesModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div><span class="text-[11px] font-bold uppercase tracking-wider text-blue-600">Đa người dùng</span><h3 class="font-black text-slate-800 text-lg">Quản Lý Hồ Sơ</h3></div>
+        <button onclick="window.app.closeManageProfilesModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="manageProfilesList" class="max-h-80 overflow-y-auto space-y-2.5 pr-1"></div>
+      <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+        <button onclick="window.app.openNewProfileModal(); window.app.closeManageProfilesModal();" class="px-4 py-2 rounded-xl text-xs font-bold text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1.5 cursor-pointer"><i data-lucide="plus" class="w-4 h-4"></i> Thêm người mới</button>
+        <button onclick="window.app.closeManageProfilesModal()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-800 text-white hover:bg-slate-900 transition-colors cursor-pointer">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADD HOMEWORK MODAL ===== -->
+  <div id="addHomeworkModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-black text-slate-800 text-lg flex items-center gap-2"><i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i> Thêm Bài Tập</h3>
+        <button onclick="window.homeworkManager.closeAddModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-sm">
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Môn học</label><select id="hwSubjectSelect" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></select></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Nội dung *</label><textarea id="hwTitle" rows="3" placeholder="Nội dung bài tập..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"></textarea></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Hạn nộp</label><input type="date" id="hwDeadline" class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Ghi chú</label><input type="text" id="hwNote" placeholder="Ghi chú..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+        <button onclick="window.homeworkManager.closeAddModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+        <button onclick="window.homeworkManager.saveHomework()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer">Thêm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADD SUBJECT MODAL ===== -->
+  <div id="addSubjectModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-black text-slate-800 text-lg flex items-center gap-2"><i data-lucide="book-plus" class="w-5 h-5 text-blue-600"></i> Thêm Môn Học</h3>
+        <button onclick="window.app.closeAddSubjectModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-3 text-sm">
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Tên môn *</label><input type="text" id="newSubjectName" placeholder="VD: Lập trình..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Tên viết tắt</label><input type="text" id="newSubjectShort" placeholder="VD: LT..." class="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none"></div>
+        <div><label class="block text-xs font-semibold text-slate-600 mb-2">Màu sắc</label><div id="newSubjectColorChips" class="flex flex-wrap gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200"></div></div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+        <button onclick="window.app.closeAddSubjectModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+        <button onclick="window.app.saveNewSubject()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HOMEWORK DETAIL MODAL ===== -->
+  <div id="homeworkDetailModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 id="hwDetailTitle" class="font-black text-slate-800 text-lg">Chi tiết bài tập</h3>
+        <button onclick="document.getElementById('homeworkDetailModal').classList.add('hidden')" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="hwDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- OCR Preview Modal -->
+  <div id="ocrPreviewModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-11/12 max-w-5xl max-h-[90vh] flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-5 border-b border-slate-100">
+        <h2 class="font-black text-slate-800 text-lg">Xem trước OCR</h2>
+        <button onclick="window.app.closeOCRPreviewModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <!-- Body -->
+      <div class="flex gap-4 p-5 overflow-hidden flex-1">
+        <!-- Image (sticky left) -->
+        <div class="w-1/3 shrink-0">
+          <img id="ocrPreviewImage" class="w-full max-h-[60vh] object-contain rounded-xl border border-slate-200 sticky top-0" src="" alt="Preview" />
+        </div>
+        <!-- Table (scrollable) -->
+        <div class="flex-1 overflow-auto">
+          <table class="w-full table-auto border-collapse text-xs">
+            <thead class="sticky top-0 z-10">
+              <tr class="bg-slate-100">
+                <th class="border p-1.5 text-left">Ngày</th>
+                <th class="border p-1.5">Bắt đầu</th>
+                <th class="border p-1.5">Kết thúc</th>
+                <th class="border p-1.5 text-left">Môn</th>
+                <th class="border p-1.5 text-left">GV</th>
+                <th class="border p-1.5 text-left">Phòng</th>
+                <th class="border p-1.5 text-left">Ghi chú</th>
+                <th class="border p-1.5"></th>
+              </tr>
+            </thead>
+            <tbody id="ocrPreviewTableBody"></tbody>
+          </table>
+          <button id="ocrPreviewAddBtn" onclick="window.app.addOCREntry()" class="mt-3 px-4 py-2 bg-blue-50 text-blue-600 font-bold text-xs rounded-xl hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer">
+            <i data-lucide="plus" class="w-4 h-4"></i> Thêm dòng
+          </button>
+        </div>
+      </div>
+      <!-- Footer -->
+      <div class="flex justify-end gap-2 p-5 border-t border-slate-100">
+        <button onclick="window.app.closeOCRPreviewModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+        <button onclick="window.app.applyOCRData('merge')" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer">Gộp</button>
+        <button onclick="window.app.applyOCRData('replace')" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-sm cursor-pointer">Thay thế</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EXPORT TEXT MODAL ===== -->
+  <div id="exportTextModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div><span class="text-[11px] font-bold uppercase tracking-wider text-blue-600">Sao chép dữ liệu</span><h3 class="font-black text-slate-800 text-lg">Dữ liệu TKB (dạng text)</h3></div>
+        <button onclick="window.app.closeExportTextModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-xs text-slate-500">Bấm "Copy tất cả" rồi dán vào VS Code ở máy khác, lưu thành file <code class="bg-slate-100 px-1 rounded">backup.json</code></p>
+      <textarea id="exportTextArea" readonly class="w-full h-64 p-3 rounded-xl border border-slate-200 text-xs font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Đang tạo..."></textarea>
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="window.app.closeExportTextModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Đóng</button>
+        <button onclick="window.app.copyExportText()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer flex items-center gap-1.5"><i data-lucide="copy" class="w-4 h-4"></i> Copy tất cả</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== IMPORT TEXT MODAL ===== -->
+  <div id="importTextModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div><span class="text-[11px] font-bold uppercase tracking-wider text-blue-600">Nhập dữ liệu</span><h3 class="font-black text-slate-800 text-lg">Dán dữ liệu TKB (text JSON)</h3></div>
+        <button onclick="window.app.closeImportTextModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-xs text-slate-500">Dán nội dung JSON đã copy từ máy khác vào ô bên dưới, rồi bấm "Nhập dữ liệu"</p>
+      <textarea id="importTextArea" class="w-full h-64 p-3 rounded-xl border border-slate-200 text-xs font-mono resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder='Dán text JSON vào đây...'></textarea>
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button onclick="window.app.closeImportTextModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+        <button onclick="window.app.importJSONText()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm cursor-pointer flex items-center gap-1.5"><i data-lucide="upload" class="w-4 h-4"></i> Nhập dữ liệu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FIREBASE CONFIG MODAL ===== -->
+  <div id="firebaseConfigModal" class="modal-backdrop fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-sky-600">Đồng bộ đám mây</span>
+          <h3 class="font-black text-slate-800 text-lg">Cấu Hình Firebase Firestore</h3>
+        </div>
+        <button onclick="window.app.closeFirebaseModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-xs text-slate-500">
+        Dán đoạn mã cấu hình <code class="bg-slate-100 px-1 rounded">firebaseConfig</code> từ Firebase Console của bạn vào đây:
+      </p>
+      <textarea id="firebaseConfigInput" rows="8" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "smart-schedule.firebaseapp.com",
+  "projectId": "smart-schedule",
+  "storageBucket": "smart-schedule.appspot.com",
+  "messagingSenderId": "...",
+  "appId": "..."
+}' class="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono resize-none focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+        <button onclick="window.app.clearFirebaseConfig()" class="px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer">Xóa cấu hình</button>
+        <div class="flex items-center gap-2">
+          <button onclick="window.app.closeFirebaseModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">Hủy</button>
+          <button onclick="window.app.saveFirebaseConfig()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-sky-600 text-white hover:bg-sky-700 transition-colors shadow-sm cursor-pointer">Lưu & Kết nối</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== APPLICATION SCRIPTS ===== -->
+  <script src="js/logger.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/subjects.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/timetable.js"></script>
+  <script src="js/homework.js"></script>
+  <script src="js/ocr-handler.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
