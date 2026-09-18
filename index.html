@@ -162,8 +162,7 @@ body { font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe 
   .print-color-box { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }
 
-
-</style>
+  </style>
 </head>
 <body class="bg-slate-50 min-h-screen flex flex-col antialiased">
 
@@ -1346,7 +1345,7 @@ class StorageManager {
         periodTimes: this.getPeriodTimes(),
         subjects,
         updatedAt: new Date().toISOString()
-      }, { merge: true }).catch(e => console.warn('[Firebase] Lỗi sync:', e.message));
+      }).catch(e => console.warn('[Firebase] Lỗi sync:', e.message));
     } catch (e) {
       console.warn('[Firebase] Lỗi sync:', e.message);
     }
@@ -1461,8 +1460,24 @@ class StorageManager {
     const id = profileId || this.getActiveProfileId();
     const schedule = this.getSchedule(id);
     const key = `${day}_${period}`;
-    if (!data || !data.subjectId) delete schedule[key];
-    else schedule[key] = data;
+    if (!data || !data.subjectId) {
+      delete schedule[key];
+    } else {
+      schedule[key] = data;
+    }
+    this.saveSchedule(schedule, id);
+  }
+
+  deletePeriod(key, profileId = null) {
+    if (!key) return;
+    const id = profileId || this.getActiveProfileId();
+    const schedule = this.getSchedule(id);
+    delete schedule[key];
+    // Also try day_period format if key has underscores
+    const parts = String(key).split('_');
+    if (parts.length >= 2) {
+      delete schedule[`${parts[0]}_${parts[1]}`];
+    }
     this.saveSchedule(schedule, id);
   }
 
@@ -1819,7 +1834,9 @@ class TimetableRenderer {
     document.getElementById('modalNote').value = data.note || '';
 
     const deleteBtn = document.getElementById('modalDeleteBtn');
-    if (deleteBtn) deleteBtn.style.display = data.subjectId ? 'inline-flex' : 'none';
+    const schedule = window.storageManager.getSchedule();
+    const hasData = !!(data && (data.subjectId || data.name || data.teacher || data.room)) || (key && !!schedule[key]);
+    if (deleteBtn) deleteBtn.style.display = hasData ? 'inline-flex' : 'none';
 
     const modal = document.getElementById('periodModal');
     if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); }
@@ -1855,8 +1872,7 @@ class TimetableRenderer {
     const newKey = `${dayId}_${this.minToHHMM(startMin)}`;
 
     if (originalKey && originalKey !== newKey) {
-      const oldPeriod = originalKey.split('_')[1];
-      window.storageManager.setPeriod(dayId, oldPeriod, null);
+      window.storageManager.deletePeriod(originalKey);
     }
     window.storageManager.setPeriod(dayId, this.minToHHMM(startMin), data);
     this.closeEditModal();
@@ -1867,13 +1883,15 @@ class TimetableRenderer {
 
   deleteModalData() {
     if (!this.currentEditingCell) return;
-    const { dayId, originalKey } = this.currentEditingCell;
-    const oldPeriod = originalKey.split('_')[1];
-    window.storageManager.setPeriod(dayId, oldPeriod, null);
+    const { originalKey } = this.currentEditingCell;
+    if (!confirm('Bạn có chắc chắn muốn xóa tiết học này?')) return;
+    if (originalKey) {
+      window.storageManager.deletePeriod(originalKey);
+    }
     this.closeEditModal();
     this.render();
     window.app.updateTodaySchedule();
-    window.app.showToast('Đã xóa!', 'info');
+    window.app.showToast('Đã xóa tiết học!', 'success');
   }
 }
 
@@ -4413,5 +4431,4 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 else window.app.init();
 
   </script>
-</body>
 </html>
